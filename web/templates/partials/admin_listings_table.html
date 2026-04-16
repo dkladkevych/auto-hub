@@ -1,0 +1,95 @@
+<div class="table-wrap">
+    <div class="admin-section-head">
+        <h3>Listings</h3>
+    </div>
+
+    <table class="admin-table">
+        <thead>
+            <tr>
+                <th>Preview</th>
+                <th>Title</th>
+                <th>Price</th>
+                <th>Risk</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            {% for car in listings %}
+            <tr>
+                <td class="col-preview">
+                    {% if car.preview_image %}
+                        <img class="admin-thumb" src="{{ car.preview_image }}" alt="{{ car.title }}">
+                    {% else %}
+                        <div class="empty-thumb">No image</div>
+                    {% endif %}
+                </td>
+
+                <td class="col-title">{{ car.title }}</td>
+
+                <td class="col-price">${{ car.price }}</td>
+
+                <td class="col-risk">
+                    <span class="risk-pill {{ car.risk_level|lower }}">{{ car.risk_level }}</span>
+                </td>
+
+                <td class="col-status">
+                    <span class="status-pill {{ car.status }}">{{ car.status }}</span>
+                </td>
+
+                <td class="col-action">
+                    <div class="action-row">
+                        <a class="table-action-btn table-action-light" href="/listing/{{ car.id }}">View</a>
+                        <a class="table-action-btn table-action-light" href="/{{ ADMIN_PATH }}/edit/{{ car.id }}">Edit</a>
+
+                        {% if car.status == "active" %}
+                        <form method="POST" action="/{{ ADMIN_PATH }}/archive/{{ car.id }}" class="action-form">
+                            <button type="submit" class="table-action-btn table-action-main">Archive</button>
+                        </form>
+                        {% else %}
+                        <form method="POST" action="/{{ ADMIN_PATH }}/unarchive/{{ car.id }}" class="action-form">
+                            <button type="submit" class="table-action-btn table-action-main">Unarchive</button>
+                        </form>
+                        {% endif %}
+
+                        <form method="POST" action="/{{ ADMIN_PATH }}/delete/{{ car.id }}" class="action-form" onsubmit="return confirm('Delete this listing permanently?');">
+                            <button type="submit" class="table-action-btn table-action-danger">Delete</button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if total_pages > 1 %}
+    <div class="pagination">
+        {% if page > 1 %}
+            <button type="button" class="pagination-nav" data-page="{{ page - 1 }}">Previous</button>
+        {% endif %}
+
+        {% for p in range(1, total_pages + 1) %}
+            {% if p == page %}
+                <span class="page-pill active-page">{{ p }}</span>
+            {% else %}
+                <button type="button" class="page-pill pagination-btn" data-page="{{ p }}">{{ p }}</button>
+            {% endif %}
+        {% endfor %}
+
+        {% if page < total_pages %}
+            <button type="button" class="pagination-nav" data-page="{{ page + 1 }}">Next</button>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener("click", function (e) {
+    const btn = e.target.closest("[data-page]");
+    if (!btn) return;
+
+    const page = btn.dataset.page;
+    loadAdminPage(page);
+});
+</script>

@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Listing | Auto-Hub{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2>Edit Listing</h2>
+
+    <div class="admin-actions">
+        <a class="soft-link" href="/{{ ADMIN_PATH }}">Dashboard</a>
+        <a class="soft-link" href="/{{ ADMIN_PATH }}/list">Manage listings</a>
+        <form method="POST" action="/{{ ADMIN_PATH }}/logout">
+            <button type="submit" class="secondary-btn">Logout</button>
+        </form>
+    </div>
+</div>
+
+{% if error %}
+    <p class="error-text">{{ error }}</p>
+{% endif %}
+
+<form method="POST" class="form-card">
+    <input type="text" name="title" placeholder="Title" value="{{ car.title or '' }}" required>
+    <input type="number" name="price" placeholder="Price" value="{{ car.price or '' }}" required>
+    <textarea name="description" placeholder="Public description" required>{{ car.description or '' }}</textarea>
+
+    <select name="risk_level" required>
+        <option value="LOW" {% if car.risk_level == "LOW" %}selected{% endif %}>LOW</option>
+        <option value="MEDIUM" {% if car.risk_level == "MEDIUM" %}selected{% endif %}>MEDIUM</option>
+        <option value="HIGH" {% if car.risk_level == "HIGH" %}selected{% endif %}>HIGH</option>
+    </select>
+
+    <input type="text" name="source_url" placeholder="Source URL" value="{{ car.source_url or '' }}">
+    <textarea name="image_urls" placeholder="One image URL per line">{{ image_urls_text }}</textarea>
+
+    <hr>
+
+    <input type="number" name="year" placeholder="Year" value="{{ car.year or '' }}">
+    <input type="text" name="make" placeholder="Make" value="{{ car.make or '' }}">
+    <input type="text" name="model" placeholder="Model" value="{{ car.model or '' }}">
+    <input type="text" name="trim" placeholder="Trim" value="{{ car.trim or '' }}">
+    <input type="number" name="mileage_km" placeholder="Mileage (km)" value="{{ car.mileage_km or '' }}">
+    <input type="text" name="transmission" placeholder="Transmission" value="{{ car.transmission or '' }}">
+    <input type="text" name="drivetrain" placeholder="Drivetrain" value="{{ car.drivetrain or '' }}">
+    <input type="text" name="fuel_type" placeholder="Fuel type" value="{{ car.fuel_type or '' }}">
+    <input type="text" name="engine" placeholder="Engine" value="{{ car.engine or '' }}">
+    <input type="text" name="body_style" placeholder="Body style" value="{{ car.body_style or '' }}">
+    <input type="text" name="exterior_color" placeholder="Exterior color" value="{{ car.exterior_color or '' }}">
+    <input type="text" name="interior_color" placeholder="Interior color" value="{{ car.interior_color or '' }}">
+    <input type="number" name="doors" placeholder="Doors" value="{{ car.doors or '' }}">
+    <input type="number" name="seats" placeholder="Seats" value="{{ car.seats or '' }}">
+    <input type="text" name="vin" placeholder="VIN" value="{{ car.vin or '' }}">
+    <input type="text" name="location" placeholder="Location" value="{{ car.location or '' }}">
+    <input type="text" name="condition" placeholder="Condition" value="{{ car.condition or '' }}">
+    <input type="text" name="title_status" placeholder="Title status" value="{{ car.title_status or '' }}">
+    <input type="text" name="seller_type" placeholder="Seller type" value="{{ car.seller_type or '' }}">
+    <input type="text" name="seller_status" placeholder="Seller status" value="{{ car.seller_status or '' }}">
+    <input type="text" name="accident_history" placeholder="Accident history" value="{{ car.accident_history or '' }}">
+    <input type="text" name="lien_status" placeholder="Lien status" value="{{ car.lien_status or '' }}">
+    <input type="text" name="rebuilt_status" placeholder="Rebuilt status" value="{{ car.rebuilt_status or '' }}">
+    <input type="text" name="horsepower" placeholder="Horsepower" value="{{ car.horsepower or '' }}">
+    <input type="text" name="turbo" placeholder="Turbo" value="{{ car.turbo or '' }}">
+
+    <hr>
+
+    <input type="text" name="contact_phone" placeholder="Seller phone" value="{{ car.contact_phone or '' }}">
+    <input type="email" name="contact_email" placeholder="Seller email" value="{{ car.contact_email or '' }}">
+    <input type="text" name="contact_facebook" placeholder="Seller Facebook profile/link" value="{{ car.contact_facebook or '' }}">
+
+    <hr>
+
+    <textarea name="mods" placeholder="Mods">{{ car.mods or '' }}</textarea>
+    <textarea name="rust" placeholder="Rust">{{ car.rust or '' }}</textarea>
+    <textarea name="issues" placeholder="Issues">{{ car.issues or '' }}</textarea>
+    <textarea name="maintenance" placeholder="Maintenance">{{ car.maintenance or '' }}</textarea>
+    <textarea name="tires" placeholder="Tires">{{ car.tires or '' }}</textarea>
+    <textarea name="brakes" placeholder="Brakes">{{ car.brakes or '' }}</textarea>
+    <textarea name="suspension" placeholder="Suspension">{{ car.suspension or '' }}</textarea>
+    <textarea name="extras" placeholder="Extras">{{ car.extras or '' }}</textarea>
+    <textarea name="notes" placeholder="Internal notes">{{ car.notes or '' }}</textarea>
+
+    <button type="submit">Save changes</button>
+</form>
+{% endblock %}

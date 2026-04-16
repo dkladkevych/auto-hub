@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Listings | Auto-Hub{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2>Manage Listings</h2>
+
+    <div class="admin-actions">
+        <a class="soft-link" href="/{{ ADMIN_PATH }}">Dashboard</a>
+        <a class="soft-link" href="/{{ ADMIN_PATH }}/new">Add new</a>
+        <form method="POST" action="/{{ ADMIN_PATH }}/logout">
+            <button type="submit" class="secondary-btn">Logout</button>
+        </form>
+    </div>
+</div>
+
+<div class="table-wrap">
+    <table>
+        <tr>
+            <th>Preview</th>
+            <th>Title</th>
+            <th>Price</th>
+            <th>Risk</th>
+            <th>Status</th>
+            <th>Action</th>
+        </tr>
+
+        {% for car in listings %}
+        <tr>
+            <td>
+                {% if car.preview_image %}
+                    <img class="admin-thumb" src="{{ car.preview_image }}" alt="{{ car.title }}">
+                {% else %}
+                    <div class="empty-thumb">No image</div>
+                {% endif %}
+            </td>
+            <td>{{ car.title }}</td>
+            <td>${{ car.price }}</td>
+            <td>
+                <span class="risk-pill {{ car.risk_level|lower }}">{{ car.risk_level }}</span>
+            </td>
+            <td>{{ car.status }}</td>
+            <td class="table-actions">
+                <a class="soft-link" href="/listing/{{ car.id }}">View</a>
+                <a class="soft-link" href="/{{ ADMIN_PATH }}/edit/{{ car.id }}">Edit</a>
+
+                {% if car.status == "active" %}
+                <form method="POST" action="/{{ ADMIN_PATH }}/archive/{{ car.id }}">
+                    <button type="submit" class="secondary-btn">Archive</button>
+                </form>
+                {% else %}
+                <form method="POST" action="/{{ ADMIN_PATH }}/unarchive/{{ car.id }}">
+                    <button type="submit" class="secondary-btn">Unarchive</button>
+                </form>
+                {% endif %}
+
+                <form method="POST" action="/{{ ADMIN_PATH }}/delete/{{ car.id }}" onsubmit="return confirm('Delete this listing permanently?');">
+                    <button type="submit" class="danger-btn">Delete</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endblock %}

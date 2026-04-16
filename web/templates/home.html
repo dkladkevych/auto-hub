@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block meta_description %}
+Browse curated car listings with manual review. Safer choices, no scams.
+{% endblock %}
+
+{% block og_title %}Auto-Hub — Curated cars{% endblock %}
+
+{% block og_description %}
+Browse curated car listings with manual review. Safer choices, no scams.
+{% endblock %}
+
+{% block title %}Auto-Hub{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Available Cars</h2>
+
+{% if listings %}
+    <div class="grid">
+        {% for car in listings %}
+        <article class="card">
+            {% if car.preview_image %}
+                <a class="card-media" href="/listing/{{ car.id }}">
+                    <img src="{{ car.preview_image }}" alt="{{ car.title }}">
+                </a>
+            {% else %}
+                <div class="no-image">No image</div>
+            {% endif %}
+
+            <div class="card-body">
+                <h3>{{ car.title }}</h3>
+                <p class="price">${{ car.price }}</p>
+
+                <div class="card-mini-specs">
+                    {% if car.mileage_km %}<span>{{ car.mileage_km }} km</span>{% endif %}
+                    {% if car.transmission %}<span>{{ car.transmission }}</span>{% endif %}
+                    {% if car.drivetrain %}<span>{{ car.drivetrain }}</span>{% endif %}
+                    {% if car.location %}<span>{{ car.location }}</span>{% endif %}
+                </div>
+
+                <p class="risk-pill {{ car.risk_level|lower }}">
+                    {{ car.risk_level }}
+                </p>
+
+                <p class="desc">
+                    {{ car.description[:120] }}{% if car.description|length > 120 %}...{% endif %}
+                </p>
+
+                <a class="btn" href="/listing/{{ car.id }}">View listing</a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+{% else %}
+    {% if has_any_filter %}
+    <div class="empty-state">
+        <h3>Nothing found</h3>
+        <p>Try adjusting filters or search terms.</p>
+        <a href="/" class="btn">Reset search</a>
+
+        <div class="popular-searches">
+            <a href="/?q=nissan" class="chip">Nissan</a>
+            <a href="/?q=toyota" class="chip">Toyota</a>
+            <a href="/?price_max=5000" class="chip">Under $5000</a>
+            <a href="/?transmission=Manual" class="chip">Manual cars</a>
+            <a href="/?drivetrain=RWD" class="chip">RWD</a>
+            <a href="/?location=ontario" class="chip">Ontario</a>
+        </div>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <h3>No listings yet</h3>
+        <p>There are no cars available right now.</p>
+        <p>Check back later.</p>
+    </div>
+    {% endif %}
+{% endif %}
+{% endblock %}

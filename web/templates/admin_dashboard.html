@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard | Auto-Hub{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2>Admin Dashboard</h2>
+
+    <div class="admin-actions">
+        <a class="soft-link" href="/{{ ADMIN_PATH }}/new">Add listing</a>
+        <form method="POST" action="/{{ ADMIN_PATH }}/logout">
+            <button type="submit" class="secondary-btn">Logout</button>
+        </form>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <span>Total</span>
+        <strong>{{ total_count }}</strong>
+    </div>
+
+    <div class="stat-card">
+        <span>Active</span>
+        <strong>{{ active_count }}</strong>
+    </div>
+
+    <div class="stat-card">
+        <span>Archived</span>
+        <strong>{{ archived_count }}</strong>
+    </div>
+
+    <div class="stat-card">
+        <span>High risk</span>
+        <strong>{{ high_risk_count }}</strong>
+    </div>
+</div>
+
+<div id="adminListingsBlock">
+    {% include "partials/admin_listings_table.html" %}
+</div>
+
+<script>
+async function loadAdminPage(page) {
+    const block = document.getElementById("adminListingsBlock");
+    const response = await fetch(`/{{ ADMIN_PATH }}/listings-block?page=${page}`);
+    const html = await response.text();
+    block.innerHTML = html;
+
+    const url = new URL(window.location);
+    url.searchParams.set("page", page);
+    window.history.replaceState({}, "", url);
+}
+</script>
+{% endblock %}

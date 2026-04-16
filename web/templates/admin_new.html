@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Add Listing | Auto-Hub{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2>Add Listing</h2>
+
+    <div class="admin-actions">
+        <a class="soft-link" href="/{{ ADMIN_PATH }}">Dashboard</a>
+        <a class="soft-link" href="/{{ ADMIN_PATH }}/list">Manage listings</a>
+        <form method="POST" action="/{{ ADMIN_PATH }}/logout">
+            <button type="submit" class="secondary-btn">Logout</button>
+        </form>
+    </div>
+</div>
+
+{% if error %}
+    <p class="error-text">{{ error }}</p>
+{% endif %}
+
+<form method="POST" class="form-card">
+    <input type="text" name="title" placeholder="Title" required>
+    <input type="number" name="price" placeholder="Price" required>
+    <textarea name="description" placeholder="Public description" required></textarea>
+
+    <select name="risk_level" required>
+        <option value="LOW">LOW</option>
+        <option value="MEDIUM">MEDIUM</option>
+        <option value="HIGH">HIGH</option>
+    </select>
+
+    <input type="text" name="source_url" placeholder="Source URL">
+    <textarea name="image_urls" placeholder="One image URL per line"></textarea>
+
+    <hr>
+
+    <input type="number" name="year" placeholder="Year">
+    <input type="text" name="make" placeholder="Make">
+    <input type="text" name="model" placeholder="Model">
+    <input type="text" name="trim" placeholder="Trim">
+    <input type="number" name="mileage_km" placeholder="Mileage (km)">
+    <input type="text" name="transmission" placeholder="Transmission">
+    <input type="text" name="drivetrain" placeholder="Drivetrain">
+    <input type="text" name="fuel_type" placeholder="Fuel type">
+    <input type="text" name="engine" placeholder="Engine">
+    <input type="text" name="body_style" placeholder="Body style">
+    <input type="text" name="exterior_color" placeholder="Exterior color">
+    <input type="text" name="interior_color" placeholder="Interior color">
+    <input type="number" name="doors" placeholder="Doors">
+    <input type="number" name="seats" placeholder="Seats">
+    <input type="text" name="vin" placeholder="VIN">
+    <input type="text" name="location" placeholder="Location">
+    <input type="text" name="contact_phone" placeholder="Seller phone">
+    <input type="email" name="contact_email" placeholder="Seller email">
+    <input type="text" name="contact_facebook" placeholder="Seller Facebook profile/link">
+    <input type="text" name="condition" placeholder="Condition">
+    <input type="text" name="title_status" placeholder="Title status">
+    <input type="text" name="seller_type" placeholder="Seller type">
+    <input type="text" name="seller_status" placeholder="Seller status">
+    <input type="text" name="accident_history" placeholder="Accident history">
+    <input type="text" name="lien_status" placeholder="Lien status">
+    <input type="text" name="rebuilt_status" placeholder="Rebuilt status">
+    <input type="text" name="horsepower" placeholder="Horsepower">
+    <input type="text" name="turbo" placeholder="Turbo">
+    <textarea name="mods" placeholder="Mods"></textarea>
+    <textarea name="rust" placeholder="Rust"></textarea>
+    <textarea name="issues" placeholder="Issues"></textarea>
+    <textarea name="maintenance" placeholder="Maintenance"></textarea>
+    <textarea name="tires" placeholder="Tires"></textarea>
+    <textarea name="brakes" placeholder="Brakes"></textarea>
+    <textarea name="suspension" placeholder="Suspension"></textarea>
+    <textarea name="extras" placeholder="Extras"></textarea>
+    <textarea name="notes" placeholder="Internal notes"></textarea>
+
+    <button type="submit">Save</button>
+</form>
+{% endblock %}

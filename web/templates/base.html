@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Auto-Hub{% endblock %}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <meta name="description" content="{% block meta_description %}Curated car listings. Manual-first. Simple and clean.{% endblock %}">
+    <!-- Open Graph -->
+    <meta property="og:title" content="{% block og_title %}Auto-Hub{% endblock %}">
+    <meta property="og:description" content="{% block og_description %}Curated car listings. Manual-first. Simple and clean.{% endblock %}">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+    <meta property="og:image" content="{% block og_image %}/static/preview.jpg{% endblock %}">
+    <link rel="shortcut icon" href="../static/icon.ico" type="image/x-icon">
+</head>
+<body>
+    <header class="header">
+        <div class="container header-inner">
+            <div class="brand-block">
+                <h1><a href="/">Auto-Hub</a></h1>
+            </div>
+
+            <form method="GET" action="/" class="nav-search">
+                <input
+                    type="text"
+                    name="q"
+                    placeholder="Search cars..."
+                    value="{{ filters.get('q', '') if filters else '' }}"
+                >
+
+                {% if filters %}
+                    {% if filters.get('location') %}
+                        <input type="hidden" name="location" value="{{ filters.get('location') }}">
+                    {% endif %}
+                    {% if filters.get('price_min') %}
+                        <input type="hidden" name="price_min" value="{{ filters.get('price_min') }}">
+                    {% endif %}
+                    {% if filters.get('price_max') %}
+                        <input type="hidden" name="price_max" value="{{ filters.get('price_max') }}">
+                    {% endif %}
+                    {% if filters.get('year_min') %}
+                        <input type="hidden" name="year_min" value="{{ filters.get('year_min') }}">
+                    {% endif %}
+                    {% if filters.get('year_max') %}
+                        <input type="hidden" name="year_max" value="{{ filters.get('year_max') }}">
+                    {% endif %}
+                    {% if filters.get('mileage_min') %}
+                        <input type="hidden" name="mileage_min" value="{{ filters.get('mileage_min') }}">
+                    {% endif %}
+                    {% if filters.get('mileage_max') %}
+                        <input type="hidden" name="mileage_max" value="{{ filters.get('mileage_max') }}">
+                    {% endif %}
+                    {% if filters.get('transmission') %}
+                        <input type="hidden" name="transmission" value="{{ filters.get('transmission') }}">
+                    {% endif %}
+                    {% if filters.get('drivetrain') %}
+                        <input type="hidden" name="drivetrain" value="{{ filters.get('drivetrain') }}">
+                    {% endif %}
+                    {% if filters.get('risk_level') %}
+                        <input type="hidden" name="risk_level" value="{{ filters.get('risk_level') }}">
+                    {% endif %}
+                    {% if filters.get('include_unknown') %}
+                        <input type="hidden" name="include_unknown" value="on">
+                    {% endif %}
+                {% endif %}
+
+                <button type="submit" class="nav-search-btn">Search</button>
+                <button type="button" class="filter-toggle-btn" onclick="toggleAdvancedFilters()" aria-label="Open filters">
+                    ⚙
+                </button>
+            </form>
+        </div>
+    </header>
+
+    <form method="GET" action="/" class="search-panel container" id="advancedFilters">
+        <div class="filter-grid">
+            <input type="text" name="location" placeholder="Location" value="{{ filters.get('location', '') if filters else '' }}">
+
+            <input type="number" name="price_min" placeholder="Price from" value="{{ filters.get('price_min', '') if filters else '' }}">
+            <input type="number" name="price_max" placeholder="Price to" value="{{ filters.get('price_max', '') if filters else '' }}">
+
+            <input type="number" name="year_min" placeholder="Year from" value="{{ filters.get('year_min', '') if filters else '' }}">
+            <input type="number" name="year_max" placeholder="Year to" value="{{ filters.get('year_max', '') if filters else '' }}">
+
+            <input type="number" name="mileage_min" placeholder="Mileage from" value="{{ filters.get('mileage_min', '') if filters else '' }}">
+            <input type="number" name="mileage_max" placeholder="Mileage to" value="{{ filters.get('mileage_max', '') if filters else '' }}">
+
+            <select name="transmission">
+                <option value="">Transmission</option>
+                <option value="Manual" {% if filters and filters.get('transmission') == 'Manual' %}selected{% endif %}>Manual</option>
+                <option value="Automatic" {% if filters and filters.get('transmission') == 'Automatic' %}selected{% endif %}>Automatic</option>
+            </select>
+
+            <select name="drivetrain">
+                <option value="">Drivetrain</option>
+                <option value="FWD" {% if filters and filters.get('drivetrain') == 'FWD' %}selected{% endif %}>FWD</option>
+                <option value="RWD" {% if filters and filters.get('drivetrain') == 'RWD' %}selected{% endif %}>RWD</option>
+                <option value="AWD" {% if filters and filters.get('drivetrain') == 'AWD' %}selected{% endif %}>AWD</option>
+            </select>
+
+            <select name="risk_level">
+                <option value="">Risk level</option>
+                <option value="LOW" {% if filters and filters.get('risk_level') == 'LOW' %}selected{% endif %}>LOW</option>
+                <option value="MEDIUM" {% if filters and filters.get('risk_level') == 'MEDIUM' %}selected{% endif %}>MEDIUM</option>
+                <option value="HIGH" {% if filters and filters.get('risk_level') == 'HIGH' %}selected{% endif %}>HIGH</option>
+            </select>
+        </div>
+
+        <label class="checkbox-row">
+            <input type="checkbox" name="include_unknown" {% if filters and filters.get('include_unknown') %}checked{% endif %}>
+            <span>Include listings with missing data</span>
+        </label>
+
+        {% if filters and filters.get('q') %}
+            <input type="hidden" name="q" value="{{ filters.get('q') }}">
+        {% endif %}
+
+        <div class="filter-actions">
+            <button type="submit" class="primary-btn">Apply filters</button>
+            <a href="/" class="reset-btn">Reset</a>
+        </div>
+    </form>
+
+    <main class="container">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-grid">
+            <div class="footer-col">
+                <h3>Auto-Hub</h3>
+                <p>Curated car listings with simple manual review.</p>
+            </div>
+
+            <div class="footer-col">
+                <h3>Contact</h3>
+                <p>
+                    <a href="https://www.facebook.com/profile.php?id=61577697437352" target="_blank" rel="noopener noreferrer">
+                        Message us on Facebook
+                    </a>
+                </p>
+            </div>
+
+            <div class="footer-col">
+                <h3>Legal</h3>
+                <p><a href="/terms">Terms of Use</a></p>
+                <p><a href="/privacy">Privacy Policy</a></p>
+            </div>
+        </div>
+
+        <div class="container footer-bottom">
+            <p>© 2026 Auto-Hub. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        function toggleAdvancedFilters() {
+            const el = document.getElementById("advancedFilters");
+            if (el) {
+                el.classList.toggle("open");
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const el = document.getElementById("advancedFilters");
+            const params = new URLSearchParams(window.location.search);
+
+            const filterKeys = [
+                "location",
+                "price_min",
+                "price_max",
+                "year_min",
+                "year_max",
+                "mileage_min",
+                "mileage_max",
+                "transmission",
+                "drivetrain",
+                "risk_level",
+                "include_unknown"
+            ];
+
+            const hasFilter = filterKeys.some(key => params.get(key));
+
+            if (el && hasFilter) {
+                el.classList.add("open");
+            }
+        });
+    </script>
+</body>
+</html>
