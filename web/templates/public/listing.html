@@ -65,26 +65,10 @@
             {% if car.year %}<div class="spec-row"><span>Year</span><strong>{{ car.year }}</strong></div>{% endif %}
             {% if car.make %}<div class="spec-row"><span>Make</span><strong>{{ car.make }}</strong></div>{% endif %}
             {% if car.model %}<div class="spec-row"><span>Model</span><strong>{{ car.model }}</strong></div>{% endif %}
-            {% if car.trim %}<div class="spec-row"><span>Trim</span><strong>{{ car.trim }}</strong></div>{% endif %}
             {% if car.mileage_km %}<div class="spec-row"><span>Mileage</span><strong>{{ car.mileage_km }} km</strong></div>{% endif %}
-            {% if car.transmission %}<div class="spec-row"><span>Transmission</span><strong>{{ car.transmission }}</strong></div>{% endif %}
-            {% if car.drivetrain %}<div class="spec-row"><span>Drivetrain</span><strong>{{ car.drivetrain }}</strong></div>{% endif %}
-            {% if car.fuel_type %}<div class="spec-row"><span>Fuel</span><strong>{{ car.fuel_type }}</strong></div>{% endif %}
-            {% if car.engine %}<div class="spec-row"><span>Engine</span><strong>{{ car.engine }}</strong></div>{% endif %}
-            {% if car.body_style %}<div class="spec-row"><span>Body style</span><strong>{{ car.body_style }}</strong></div>{% endif %}
-            {% if car.exterior_color %}<div class="spec-row"><span>Exterior</span><strong>{{ car.exterior_color }}</strong></div>{% endif %}
-            {% if car.interior_color %}<div class="spec-row"><span>Interior</span><strong>{{ car.interior_color }}</strong></div>{% endif %}
-            {% if car.doors %}<div class="spec-row"><span>Doors</span><strong>{{ car.doors }}</strong></div>{% endif %}
-            {% if car.seats %}<div class="spec-row"><span>Seats</span><strong>{{ car.seats }}</strong></div>{% endif %}
             {% if car.location %}<div class="spec-row"><span>Location</span><strong>{{ car.location }}</strong></div>{% endif %}
             {% if car.condition %}<div class="spec-row"><span>Condition</span><strong>{{ car.condition }}</strong></div>{% endif %}
-            {% if car.title_status %}<div class="spec-row"><span>Title status</span><strong>{{ car.title_status }}</strong></div>{% endif %}
-            {% if masked_vin %}<div class="spec-row"><span>VIN</span><strong>{{ masked_vin }}</strong></div>{% endif %}
-            {% if car.seller_type %}<div class="spec-row"><span>Seller type</span><strong>{{ car.seller_type }}</strong></div>{% endif %}
-            {% if car.accident_history %}<div class="spec-row"><span>Accident history</span><strong>{{ car.accident_history }}</strong></div>{% endif %}
-            {% if car.rebuilt_status %}<div class="spec-row"><span>Rebuilt</span><strong>{{ car.rebuilt_status }}</strong></div>{% endif %}
-            {% if car.horsepower %}<div class="spec-row"><span>Horsepower</span><strong>{{ car.horsepower }}</strong></div>{% endif %}
-            {% if car.turbo %}<div class="spec-row"><span>Turbo</span><strong>{{ car.turbo }}</strong></div>{% endif %}
+            {% if car.seller_status %}<div class="spec-row"><span>Seller status</span><strong>{{ car.seller_status }}</strong></div>{% endif %}
         </div>
 
         <div class="description-block">
@@ -92,79 +76,6 @@
             <p>{{ car.description }}</p>
         </div>
 
-        {% if car.mods %}
-        <div class="extra-block">
-            <h3>Mods</h3>
-            <p>{{ car.mods }}</p>
-        </div>
-        {% endif %}
-
-        {% if car.rust %}
-        <div class="extra-block">
-            <h3>Rust</h3>
-            <p>{{ car.rust }}</p>
-        </div>
-        {% endif %}
-
-        {% if car.issues %}
-        <div class="extra-block">
-            <h3>Issues</h3>
-            <p>{{ car.issues }}</p>
-        </div>
-        {% endif %}
-
-        {% if car.maintenance %}
-        <div class="extra-block">
-            <h3>Maintenance</h3>
-            <p>{{ car.maintenance }}</p>
-        </div>
-        {% endif %}
-
-        {% if car.tires %}
-        <div class="extra-block">
-            <h3>Tires</h3>
-            <p>{{ car.tires }}</p>
-        </div>
-        {% endif %}
-
-        {% if car.brakes %}
-        <div class="extra-block">
-            <h3>Brakes</h3>
-            <p>{{ car.brakes }}</p>
-        </div>
-        {% endif %}
-
-        {% if car.suspension %}
-        <div class="extra-block">
-            <h3>Suspension</h3>
-            <p>{{ car.suspension }}</p>
-        </div>
-        {% endif %}
-
-        {% if car.extras %}
-        <div class="extra-block">
-            <h3>Extras</h3>
-            <p>{{ car.extras }}</p>
-        </div>
-        {% endif %}
-
-        {% if car.contact_phone or car.contact_email or car.contact_facebook %}
-        <div class="extra-block">
-            <h3>Seller contact</h3>
-
-            {% if car.contact_phone %}
-                <p><strong>Phone:</strong> {{ car.contact_phone }}</p>
-            {% endif %}
-
-            {% if car.contact_email %}
-                <p><strong>Email:</strong> {{ car.contact_email }}</p>
-            {% endif %}
-
-            {% if car.contact_facebook %}
-                <p><strong>Facebook:</strong> <a href="{{ car.contact_facebook }}" target="_blank">{{ car.contact_facebook }}</a></p>
-            {% endif %}
-        </div>
-        {% endif %}
         <div class="listing-disclaimer">
             <p>
                 Auto-Hub does not guarantee vehicle condition, title status, or seller accuracy.

@@ -33,8 +33,6 @@ Browse curated car listings with manual review. Safer choices, no scams.
 
                 <div class="card-mini-specs">
                     {% if car.mileage_km %}<span>{{ car.mileage_km }} km</span>{% endif %}
-                    {% if car.transmission %}<span>{{ car.transmission }}</span>{% endif %}
-                    {% if car.drivetrain %}<span>{{ car.drivetrain }}</span>{% endif %}
                     {% if car.location %}<span>{{ car.location }}</span>{% endif %}
                 </div>
 
@@ -62,8 +60,6 @@ Browse curated car listings with manual review. Safer choices, no scams.
             <a href="/?q=nissan" class="chip">Nissan</a>
             <a href="/?q=toyota" class="chip">Toyota</a>
             <a href="/?price_max=5000" class="chip">Under $5000</a>
-            <a href="/?transmission=Manual" class="chip">Manual cars</a>
-            <a href="/?drivetrain=RWD" class="chip">RWD</a>
             <a href="/?location=ontario" class="chip">Ontario</a>
         </div>
     </div>

@@ -2,7 +2,6 @@ from flask import abort
 
 from ..db import get_db
 from ..utils.location import build_location_search
-from ..utils.vin import mask_vin
 
 
 def _to_int(value):
@@ -22,14 +21,9 @@ def get_home_listings(filters):
     year_max = _to_int(filters.get("year_max", "").strip())
     mileage_min = _to_int(filters.get("mileage_min", "").strip())
     mileage_max = _to_int(filters.get("mileage_max", "").strip())
-    transmission = filters.get("transmission", "").strip()
-    drivetrain = filters.get("drivetrain", "").strip()
     risk_level = filters.get("risk_level", "").strip()
     location = filters.get("location", "").strip()
     include_unknown = filters.get("include_unknown") == "on"
-    fuel_type = filters.get("fuel_type", "").strip()
-    body_style = filters.get("body_style", "").strip()
-    condition = filters.get("condition", "").strip()
 
     has_any_filter = any([
         q,
@@ -40,12 +34,7 @@ def get_home_listings(filters):
         year_max is not None,
         mileage_min is not None,
         mileage_max is not None,
-        transmission,
-        drivetrain,
         risk_level,
-        fuel_type,
-        body_style,
-        condition,
     ])
 
     query = """
@@ -70,13 +59,12 @@ def get_home_listings(filters):
                 l.title LIKE ?
                 OR l.make LIKE ?
                 OR l.model LIKE ?
-                OR l.trim LIKE ?
                 OR l.description LIKE ?
                 OR l.location LIKE ?
             )
         """
         like = f"%{q}%"
-        params += [like, like, like, like, like, like]
+        params += [like, like, like, like, like]
 
     if location:
         normalized_location = build_location_search(location)
@@ -127,44 +115,9 @@ def get_home_listings(filters):
         query += " AND l.mileage_km <= ?"
         params.append(mileage_max)
 
-    if transmission:
-        if include_unknown:
-            query += " AND (l.transmission = ? OR l.transmission IS NULL OR l.transmission = '')"
-        else:
-            query += " AND l.transmission = ?"
-        params.append(transmission)
-
-    if drivetrain:
-        if include_unknown:
-            query += " AND (l.drivetrain = ? OR l.drivetrain IS NULL OR l.drivetrain = '')"
-        else:
-            query += " AND l.drivetrain = ?"
-        params.append(drivetrain)
-
     if risk_level:
         query += " AND l.risk_level = ?"
         params.append(risk_level)
-
-    if fuel_type:
-        if include_unknown:
-            query += " AND (l.fuel_type = ? OR l.fuel_type IS NULL OR l.fuel_type = '')"
-        else:
-            query += " AND l.fuel_type = ?"
-        params.append(fuel_type)
-
-    if body_style:
-        if include_unknown:
-            query += " AND (l.body_style = ? OR l.body_style IS NULL OR l.body_style = '')"
-        else:
-            query += " AND l.body_style = ?"
-        params.append(body_style)
-
-    if condition:
-        if include_unknown:
-            query += " AND (l.condition = ? OR l.condition IS NULL OR l.condition = '')"
-        else:
-            query += " AND l.condition = ?"
-        params.append(condition)
 
     query += " ORDER BY l.created_at DESC"
 
@@ -176,7 +129,7 @@ def get_home_listings(filters):
 
 
 def get_listing_page_data(listing_id: int):
-    """Возвращает объявление, его картинки и замаскированный VIN."""
+    """Возвращает объявление и его картинки."""
     db = get_db()
 
     car = db.execute("""
@@ -192,7 +145,7 @@ def get_listing_page_data(listing_id: int):
     if car["status"] == "draft":
         db.close()
         abort(404)
-        
+
     images = db.execute("""
         SELECT *
         FROM listing_images
@@ -202,4 +155,4 @@ def get_listing_page_data(listing_id: int):
 
     db.close()
 
-    return car, images, mask_vin(car["vin"])
+    return car, images

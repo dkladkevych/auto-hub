@@ -52,23 +52,8 @@
                     {% if filters.get('mileage_max') %}
                         <input type="hidden" name="mileage_max" value="{{ filters.get('mileage_max') }}">
                     {% endif %}
-                    {% if filters.get('transmission') %}
-                        <input type="hidden" name="transmission" value="{{ filters.get('transmission') }}">
-                    {% endif %}
-                    {% if filters.get('drivetrain') %}
-                        <input type="hidden" name="drivetrain" value="{{ filters.get('drivetrain') }}">
-                    {% endif %}
                     {% if filters.get('risk_level') %}
                         <input type="hidden" name="risk_level" value="{{ filters.get('risk_level') }}">
-                    {% endif %}
-                    {% if filters.get('fuel_type') %}
-                        <input type="hidden" name="fuel_type" value="{{ filters.get('fuel_type') }}">
-                    {% endif %}
-                    {% if filters.get('body_style') %}
-                        <input type="hidden" name="body_style" value="{{ filters.get('body_style') }}">
-                    {% endif %}
-                    {% if filters.get('condition') %}
-                        <input type="hidden" name="condition" value="{{ filters.get('condition') }}">
                     {% endif %}
                     {% if filters.get('include_unknown') %}
                         <input type="hidden" name="include_unknown" value="on">
@@ -95,57 +80,6 @@
 
             <input type="number" name="mileage_min" placeholder="Mileage from" value="{{ filters.get('mileage_min', '') if filters else '' }}">
             <input type="number" name="mileage_max" placeholder="Mileage to" value="{{ filters.get('mileage_max', '') if filters else '' }}">
-
-            <select name="transmission">
-                <option value="">Transmission</option>
-                <option value="Manual" {% if filters and filters.get('transmission') == 'Manual' %}selected{% endif %}>Manual</option>
-                <option value="Automatic" {% if filters and filters.get('transmission') == 'Automatic' %}selected{% endif %}>Automatic</option>
-                <option value="CVT" {% if filters and filters.get('transmission') == 'CVT' %}selected{% endif %}>CVT</option>
-                <option value="DCT" {% if filters and filters.get('transmission') == 'DCT' %}selected{% endif %}>DCT</option>
-                <option value="Unknown" {% if filters and filters.get('transmission') == 'Unknown' %}selected{% endif %}>Unknown</option>
-            </select>
-
-            <select name="drivetrain">
-                <option value="">Drivetrain</option>
-                <option value="FWD" {% if filters and filters.get('drivetrain') == 'FWD' %}selected{% endif %}>FWD</option>
-                <option value="RWD" {% if filters and filters.get('drivetrain') == 'RWD' %}selected{% endif %}>RWD</option>
-                <option value="AWD" {% if filters and filters.get('drivetrain') == 'AWD' %}selected{% endif %}>AWD</option>
-                <option value="4WD" {% if filters and filters.get('drivetrain') == '4WD' %}selected{% endif %}>4WD</option>
-                <option value="Unknown" {% if filters and filters.get('drivetrain') == 'Unknown' %}selected{% endif %}>Unknown</option>
-            </select>
-
-            <select name="fuel_type">
-                <option value="">Fuel type</option>
-                <option value="Gasoline" {% if filters and filters.get('fuel_type') == 'Gasoline' %}selected{% endif %}>Gasoline</option>
-                <option value="Diesel" {% if filters and filters.get('fuel_type') == 'Diesel' %}selected{% endif %}>Diesel</option>
-                <option value="Hybrid" {% if filters and filters.get('fuel_type') == 'Hybrid' %}selected{% endif %}>Hybrid</option>
-                <option value="Plug-in Hybrid" {% if filters and filters.get('fuel_type') == 'Plug-in Hybrid' %}selected{% endif %}>Plug-in Hybrid</option>
-                <option value="Electric" {% if filters and filters.get('fuel_type') == 'Electric' %}selected{% endif %}>Electric</option>
-                <option value="Unknown" {% if filters and filters.get('fuel_type') == 'Unknown' %}selected{% endif %}>Unknown</option>
-            </select>
-
-            <select name="body_style">
-                <option value="">Body style</option>
-                <option value="Sedan" {% if filters and filters.get('body_style') == 'Sedan' %}selected{% endif %}>Sedan</option>
-                <option value="Coupe" {% if filters and filters.get('body_style') == 'Coupe' %}selected{% endif %}>Coupe</option>
-                <option value="Hatchback" {% if filters and filters.get('body_style') == 'Hatchback' %}selected{% endif %}>Hatchback</option>
-                <option value="Wagon" {% if filters and filters.get('body_style') == 'Wagon' %}selected{% endif %}>Wagon</option>
-                <option value="SUV" {% if filters and filters.get('body_style') == 'SUV' %}selected{% endif %}>SUV</option>
-                <option value="Crossover" {% if filters and filters.get('body_style') == 'Crossover' %}selected{% endif %}>Crossover</option>
-                <option value="Pickup" {% if filters and filters.get('body_style') == 'Pickup' %}selected{% endif %}>Pickup</option>
-                <option value="Van" {% if filters and filters.get('body_style') == 'Van' %}selected{% endif %}>Van</option>
-                <option value="Convertible" {% if filters and filters.get('body_style') == 'Convertible' %}selected{% endif %}>Convertible</option>
-                <option value="Other" {% if filters and filters.get('body_style') == 'Other' %}selected{% endif %}>Other</option>
-            </select>
-
-            <select name="condition">
-                <option value="">Condition</option>
-                <option value="Excellent" {% if filters and filters.get('condition') == 'Excellent' %}selected{% endif %}>Excellent</option>
-                <option value="Good" {% if filters and filters.get('condition') == 'Good' %}selected{% endif %}>Good</option>
-                <option value="Fair" {% if filters and filters.get('condition') == 'Fair' %}selected{% endif %}>Fair</option>
-                <option value="Poor" {% if filters and filters.get('condition') == 'Poor' %}selected{% endif %}>Poor</option>
-                <option value="Unknown" {% if filters and filters.get('condition') == 'Unknown' %}selected{% endif %}>Unknown</option>
-            </select>
 
             <select name="risk_level">
                 <option value="">Risk level</option>
@@ -222,8 +156,6 @@
                 "year_max",
                 "mileage_min",
                 "mileage_max",
-                "transmission",
-                "drivetrain",
                 "risk_level",
                 "include_unknown"
             ];

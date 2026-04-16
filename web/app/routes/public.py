@@ -19,11 +19,10 @@ def home():
 
 @public_bp.route("/listing/<int:id>")
 def listing(id):
-    car, images, masked_vin = get_listing_page_data(id)
+    car, images = get_listing_page_data(id)
 
     return render_template(
         "public/listing.html",
         car=car,
         images=images,
-        masked_vin=masked_vin,
     )
