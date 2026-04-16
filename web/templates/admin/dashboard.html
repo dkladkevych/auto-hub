@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "admin/base.html" %}
 {% block title %}Admin Dashboard | Auto-Hub{% endblock %}
 
 {% block content %}
@@ -20,6 +20,11 @@
     </div>
 
     <div class="stat-card">
+        <span>Drafts</span>
+        <strong>{{ draft_count }}</strong>
+    </div>
+
+    <div class="stat-card">
         <span>Active</span>
         <strong>{{ active_count }}</strong>
     </div>
@@ -28,15 +33,10 @@
         <span>Archived</span>
         <strong>{{ archived_count }}</strong>
     </div>
-
-    <div class="stat-card">
-        <span>High risk</span>
-        <strong>{{ high_risk_count }}</strong>
-    </div>
 </div>
 
 <div id="adminListingsBlock">
-    {% include "partials/admin_listings_table.html" %}
+    {% include "admin/partials/listings_table.html" %}
 </div>
 
 <script>

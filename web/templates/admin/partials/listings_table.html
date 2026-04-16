@@ -47,9 +47,13 @@
                         <form method="POST" action="/{{ ADMIN_PATH }}/archive/{{ car.id }}" class="action-form">
                             <button type="submit" class="table-action-btn table-action-main">Archive</button>
                         </form>
-                        {% else %}
+                        {% elif car.status == "archived" %}
                         <form method="POST" action="/{{ ADMIN_PATH }}/unarchive/{{ car.id }}" class="action-form">
                             <button type="submit" class="table-action-btn table-action-main">Unarchive</button>
+                        </form>
+                        {% elif car.status == "draft" %}
+                        <form method="POST" action="/{{ ADMIN_PATH }}/publish/{{ car.id }}" class="action-form">
+                            <button type="submit" class="table-action-btn table-action-main">Publish</button>
                         </form>
                         {% endif %}
 

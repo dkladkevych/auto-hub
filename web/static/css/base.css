@@ -1,0 +1,269 @@
+:root {
+    --bg: #f3f0eb;
+    --surface: #fcfbf8;
+    --surface-2: #f6f2ec;
+    --border: #e6ddd2;
+    --text: #2f2a25;
+    --muted: #786f66;
+    --accent: #8b7355;
+    --accent-hover: #776246;
+    --low: #6f9b76;
+    --medium: #b78a52;
+    --high: #b86a63;
+    --shadow: 0 10px 30px rgba(75, 62, 48, 0.08);
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
+}
+
+/* ========== Base ========== */
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    line-height: 1.5;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+}
+
+img {
+    display: block;
+    max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+    font: inherit;
+}
+
+button {
+    cursor: pointer;
+}
+
+.container {
+    width: min(1180px, calc(100% - 32px));
+    margin: 0 auto;
+}
+
+main.container {
+    flex: 1;
+    padding-top: 28px;
+    padding-bottom: 40px;
+}
+
+/* ========== Buttons ========== */
+
+.btn,
+.source-link,
+.soft-link,
+.primary-btn,
+.secondary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0 18px;
+    border-radius: 999px;
+    transition: 0.18s ease;
+}
+
+.btn,
+.source-link,
+.primary-btn {
+    border: none;
+    background: var(--accent);
+    color: #fff;
+}
+
+.btn:hover,
+.source-link:hover,
+.primary-btn:hover {
+    background: var(--accent-hover);
+}
+
+.soft-link,
+.secondary-btn {
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.soft-link:hover,
+.secondary-btn:hover {
+    background: #efe8de;
+}
+
+.danger-btn {
+    min-height: 42px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 999px;
+    background: #b86a63;
+    color: #fff;
+}
+
+.danger-btn:hover {
+    background: #a2554d;
+}
+
+/* ========== Pills ========== */
+
+.risk-pill,
+.risk {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 34px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.risk.low,
+.risk-pill.low {
+    background: rgba(111, 155, 118, 0.14);
+    color: var(--low);
+}
+
+.risk.medium,
+.risk-pill.medium {
+    background: rgba(183, 138, 82, 0.14);
+    color: var(--medium);
+}
+
+.risk.high,
+.risk-pill.high {
+    background: rgba(184, 106, 99, 0.14);
+    color: var(--high);
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 0 12px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: capitalize;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--text);
+}
+
+.status-pill.active {
+    background: rgba(111, 155, 118, 0.14);
+    color: var(--low);
+    border-color: rgba(111, 155, 118, 0.2);
+}
+
+.status-pill.archived {
+    background: rgba(120, 111, 102, 0.14);
+    color: var(--muted);
+    border-color: rgba(120, 111, 102, 0.2);
+}
+
+/* ========== Forms shared ========== */
+
+input,
+textarea,
+select {
+    width: 100%;
+    padding: 14px 15px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: #fffdfa;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+textarea {
+    min-height: 130px;
+    resize: vertical;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(139, 115, 85, 0.12);
+}
+
+form button[type="submit"] {
+    min-height: 46px;
+    padding: 0 18px;
+    border: none;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+}
+
+form button[type="submit"]:hover {
+    background: var(--accent-hover);
+}
+
+.error-text {
+    margin: 0 0 12px;
+    color: #a2554d;
+}
+
+/* ========== Shared utility states ========== */
+
+.no-image,
+.empty-thumb {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-2);
+    color: var(--muted);
+    border-radius: 12px;
+}
+
+.empty-thumb {
+    width: 92px;
+    height: 68px;
+    font-size: 12px;
+}
+
+.no-image {
+    width: 100%;
+    min-height: 220px;
+}
+
+/* ========== Shared responsive ========== */
+
+@media (max-width: 768px) {
+    .container {
+        width: min(100% - 20px, 1180px);
+    }
+
+    .btn,
+    .source-link,
+    .soft-link,
+    .primary-btn,
+    .secondary-btn {
+        min-height: 42px;
+    }
+}

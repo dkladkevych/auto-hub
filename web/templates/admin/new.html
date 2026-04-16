@@ -1,0 +1,226 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Add Listing | Auto-Hub{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2>Add Listing</h2>
+
+    <div class="admin-actions">
+        <a class="soft-link" href="/{{ ADMIN_PATH }}">Dashboard</a>
+        <form method="POST" action="/{{ ADMIN_PATH }}/logout">
+            <button type="submit" class="secondary-btn">Logout</button>
+        </form>
+    </div>
+</div>
+
+{% if error %}
+    <p class="error-text">{{ error }}</p>
+{% endif %}
+
+<form method="POST" class="form-card admin-form">
+    <section class="admin-form-section">
+        <div class="section-head">
+            <h3>Listing basics</h3>
+            <p>Main public information for the card and listing page.</p>
+        </div>
+
+        <div class="admin-form-grid admin-form-grid-2">
+            <input type="text" name="title" placeholder="Title" required>
+            <input type="number" name="price" placeholder="Price" required>
+        </div>
+
+        <textarea name="description" placeholder="Public description" required></textarea>
+
+        <div class="admin-form-grid admin-form-grid-2">
+            <input type="text" name="source_url" placeholder="Source URL">
+            <select name="risk_level" required>
+                <option value="">Risk level</option>
+                <option value="LOW">LOW</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="HIGH">HIGH</option>
+            </select>
+        </div>
+
+        <textarea name="image_urls" placeholder="One image URL per line"></textarea>
+    </section>
+
+    <hr>
+
+    <section class="admin-form-section">
+        <div class="section-head">
+            <h3>Vehicle details</h3>
+            <p>Core technical and identification data.</p>
+        </div>
+
+        <div class="admin-form-grid admin-form-grid-3">
+            <input type="number" name="year" placeholder="Year">
+            <input type="text" name="make" placeholder="Make">
+            <input type="text" name="model" placeholder="Model">
+            <input type="text" name="trim" placeholder="Trim">
+            <input type="number" name="mileage_km" placeholder="Mileage (km)">
+
+            <select name="transmission">
+                <option value="">Transmission</option>
+                <option value="Manual">Manual</option>
+                <option value="Automatic">Automatic</option>
+                <option value="CVT">CVT</option>
+                <option value="DCT">DCT</option>
+                <option value="Unknown">Unknown</option>
+            </select>
+
+            <select name="drivetrain">
+                <option value="">Drivetrain</option>
+                <option value="FWD">FWD</option>
+                <option value="RWD">RWD</option>
+                <option value="AWD">AWD</option>
+                <option value="4WD">4WD</option>
+                <option value="Unknown">Unknown</option>
+            </select>
+
+            <select name="fuel_type">
+                <option value="">Fuel type</option>
+                <option value="Gasoline">Gasoline</option>
+                <option value="Diesel">Diesel</option>
+                <option value="Hybrid">Hybrid</option>
+                <option value="Plug-in Hybrid">Plug-in Hybrid</option>
+                <option value="Electric">Electric</option>
+                <option value="Unknown">Unknown</option>
+            </select>
+
+            <input type="text" name="engine" placeholder="Engine">
+
+            <select name="body_style">
+                <option value="">Body style</option>
+                <option value="Sedan">Sedan</option>
+                <option value="Coupe">Coupe</option>
+                <option value="Hatchback">Hatchback</option>
+                <option value="Wagon">Wagon</option>
+                <option value="SUV">SUV</option>
+                <option value="Crossover">Crossover</option>
+                <option value="Pickup">Pickup</option>
+                <option value="Van">Van</option>
+                <option value="Convertible">Convertible</option>
+                <option value="Other">Other</option>
+            </select>
+
+            <input type="text" name="exterior_color" placeholder="Exterior color">
+            <input type="text" name="interior_color" placeholder="Interior color">
+            <input type="number" name="doors" placeholder="Doors">
+            <input type="number" name="seats" placeholder="Seats">
+            <input type="text" name="horsepower" placeholder="Horsepower">
+
+            <select name="turbo">
+                <option value="">Turbo</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+                <option value="Unknown">Unknown</option>
+            </select>
+
+            <input type="text" name="vin" placeholder="VIN">
+            <input type="text" name="location" placeholder="Location">
+        </div>
+    </section>
+
+    <hr>
+
+    <section class="admin-form-section">
+        <div class="section-head">
+            <h3>Seller & legal</h3>
+            <p>Ownership, legal clarity and seller contact information.</p>
+        </div>
+
+        <div class="admin-form-grid admin-form-grid-3">
+            <input type="text" name="contact_phone" placeholder="Seller phone">
+            <input type="email" name="contact_email" placeholder="Seller email">
+            <input type="text" name="contact_facebook" placeholder="Seller Facebook profile/link">
+
+            <select name="seller_type">
+                <option value="">Seller type</option>
+                <option value="Private">Private</option>
+                <option value="Dealer">Dealer</option>
+                <option value="Unknown">Unknown</option>
+            </select>
+
+            <select name="seller_status">
+                <option value="">Seller status</option>
+                <option value="Owner">Owner</option>
+                <option value="Broker">Broker</option>
+                <option value="Dealer Rep">Dealer Rep</option>
+                <option value="Unknown">Unknown</option>
+            </select>
+
+            <select name="title_status">
+                <option value="">Title status</option>
+                <option value="Clean">Clean</option>
+                <option value="Rebuilt">Rebuilt</option>
+                <option value="Salvage">Salvage</option>
+                <option value="Unknown">Unknown</option>
+            </select>
+
+            <select name="lien_status">
+                <option value="">Lien status</option>
+                <option value="No lien">No lien</option>
+                <option value="Lien present">Lien present</option>
+                <option value="Unknown">Unknown</option>
+            </select>
+
+            <select name="rebuilt_status">
+                <option value="">Rebuilt status</option>
+                <option value="No">No</option>
+                <option value="Yes">Yes</option>
+                <option value="Unknown">Unknown</option>
+            </select>
+
+            <select name="accident_history">
+                <option value="">Accident history</option>
+                <option value="No accidents">No accidents</option>
+                <option value="Minor accident">Minor accident</option>
+                <option value="Major accident">Major accident</option>
+                <option value="Unknown">Unknown</option>
+            </select>
+        </div>
+    </section>
+
+    <hr>
+
+    <section class="admin-form-section">
+        <div class="section-head">
+            <h3>Condition notes</h3>
+            <p>Mechanical, cosmetic and general condition notes.</p>
+        </div>
+
+        <div class="admin-form-grid admin-form-grid-2">
+            <select name="condition">
+                <option value="">Condition</option>
+                <option value="Excellent">Excellent</option>
+                <option value="Good">Good</option>
+                <option value="Fair">Fair</option>
+                <option value="Poor">Poor</option>
+                <option value="Unknown">Unknown</option>
+            </select>
+
+            <textarea name="mods" placeholder="Mods"></textarea>
+            <textarea name="rust" placeholder="Rust"></textarea>
+            <textarea name="issues" placeholder="Issues"></textarea>
+            <textarea name="maintenance" placeholder="Maintenance"></textarea>
+            <textarea name="tires" placeholder="Tires"></textarea>
+            <textarea name="brakes" placeholder="Brakes"></textarea>
+            <textarea name="suspension" placeholder="Suspension"></textarea>
+            <textarea name="extras" placeholder="Extras"></textarea>
+        </div>
+
+        <textarea name="notes" placeholder="Internal notes"></textarea>
+    </section>
+
+    <hr>
+
+    <section class="admin-form-section">
+
+        <div class="form-actions">
+            <button type="submit" name="save_mode" value="draft">Save draft</button>
+            <button type="submit" name="save_mode" value="publish">Publish</button>
+        </div>
+    </section>
+</form>
+{% endblock %}

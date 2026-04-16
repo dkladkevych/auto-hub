@@ -1,0 +1,232 @@
+{% extends "admin/base.html" %}
+
+{% block title %}Edit Listing | Auto-Hub{% endblock %}
+
+{% block content %}
+<div class="page-head">
+    <h2>Edit Listing</h2>
+
+    <div class="admin-actions">
+        <a class="soft-link" href="/{{ ADMIN_PATH }}">Dashboard</a>
+        <form method="POST" action="/{{ ADMIN_PATH }}/logout">
+            <button type="submit" class="secondary-btn">Logout</button>
+        </form>
+    </div>
+</div>
+
+{% if error %}
+    <p class="error-text">{{ error }}</p>
+{% endif %}
+
+<form method="POST" class="form-card admin-form">
+    <section class="admin-form-section">
+        <div class="section-head">
+            <h3>Listing basics</h3>
+            <p>Main public information for the card and listing page.</p>
+        </div>
+
+        <div class="admin-form-grid admin-form-grid-2">
+            <input type="text" name="title" placeholder="Title" value="{{ car.title or '' }}" required>
+            <input type="number" name="price" placeholder="Price" value="{{ car.price or '' }}" required>
+        </div>
+
+        <textarea name="description" placeholder="Public description" required>{{ car.description or '' }}</textarea>
+
+        <div class="admin-form-grid admin-form-grid-2">
+            <input type="text" name="source_url" placeholder="Source URL" value="{{ car.source_url or '' }}">
+
+            <select name="risk_level" required>
+                <option value="">Risk level</option>
+                <option value="LOW" {% if car.risk_level == "LOW" %}selected{% endif %}>LOW</option>
+                <option value="MEDIUM" {% if car.risk_level == "MEDIUM" %}selected{% endif %}>MEDIUM</option>
+                <option value="HIGH" {% if car.risk_level == "HIGH" %}selected{% endif %}>HIGH</option>
+            </select>
+        </div>
+
+        <textarea name="image_urls" placeholder="One image URL per line">{{ image_urls_text }}</textarea>
+    </section>
+
+    <hr>
+
+    <section class="admin-form-section">
+        <div class="section-head">
+            <h3>Vehicle details</h3>
+            <p>Core technical and identification data.</p>
+        </div>
+
+        <div class="admin-form-grid admin-form-grid-3">
+            <input type="number" name="year" placeholder="Year" value="{{ car.year or '' }}">
+            <input type="text" name="make" placeholder="Make" value="{{ car.make or '' }}">
+            <input type="text" name="model" placeholder="Model" value="{{ car.model or '' }}">
+            <input type="text" name="trim" placeholder="Trim" value="{{ car.trim or '' }}">
+            <input type="number" name="mileage_km" placeholder="Mileage (km)" value="{{ car.mileage_km or '' }}">
+
+            <select name="transmission">
+                <option value="">Transmission</option>
+                <option value="Manual" {% if car.transmission == "Manual" %}selected{% endif %}>Manual</option>
+                <option value="Automatic" {% if car.transmission == "Automatic" %}selected{% endif %}>Automatic</option>
+                <option value="CVT" {% if car.transmission == "CVT" %}selected{% endif %}>CVT</option>
+                <option value="DCT" {% if car.transmission == "DCT" %}selected{% endif %}>DCT</option>
+                <option value="Unknown" {% if car.transmission == "Unknown" %}selected{% endif %}>Unknown</option>
+            </select>
+
+            <select name="drivetrain">
+                <option value="">Drivetrain</option>
+                <option value="FWD" {% if car.drivetrain == "FWD" %}selected{% endif %}>FWD</option>
+                <option value="RWD" {% if car.drivetrain == "RWD" %}selected{% endif %}>RWD</option>
+                <option value="AWD" {% if car.drivetrain == "AWD" %}selected{% endif %}>AWD</option>
+                <option value="4WD" {% if car.drivetrain == "4WD" %}selected{% endif %}>4WD</option>
+                <option value="Unknown" {% if car.drivetrain == "Unknown" %}selected{% endif %}>Unknown</option>
+            </select>
+
+            <select name="fuel_type">
+                <option value="">Fuel type</option>
+                <option value="Gasoline" {% if car.fuel_type == "Gasoline" %}selected{% endif %}>Gasoline</option>
+                <option value="Diesel" {% if car.fuel_type == "Diesel" %}selected{% endif %}>Diesel</option>
+                <option value="Hybrid" {% if car.fuel_type == "Hybrid" %}selected{% endif %}>Hybrid</option>
+                <option value="Plug-in Hybrid" {% if car.fuel_type == "Plug-in Hybrid" %}selected{% endif %}>Plug-in Hybrid</option>
+                <option value="Electric" {% if car.fuel_type == "Electric" %}selected{% endif %}>Electric</option>
+                <option value="Unknown" {% if car.fuel_type == "Unknown" %}selected{% endif %}>Unknown</option>
+            </select>
+
+            <input type="text" name="engine" placeholder="Engine" value="{{ car.engine or '' }}">
+
+            <select name="body_style">
+                <option value="">Body style</option>
+                <option value="Sedan" {% if car.body_style == "Sedan" %}selected{% endif %}>Sedan</option>
+                <option value="Coupe" {% if car.body_style == "Coupe" %}selected{% endif %}>Coupe</option>
+                <option value="Hatchback" {% if car.body_style == "Hatchback" %}selected{% endif %}>Hatchback</option>
+                <option value="Wagon" {% if car.body_style == "Wagon" %}selected{% endif %}>Wagon</option>
+                <option value="SUV" {% if car.body_style == "SUV" %}selected{% endif %}>SUV</option>
+                <option value="Crossover" {% if car.body_style == "Crossover" %}selected{% endif %}>Crossover</option>
+                <option value="Pickup" {% if car.body_style == "Pickup" %}selected{% endif %}>Pickup</option>
+                <option value="Van" {% if car.body_style == "Van" %}selected{% endif %}>Van</option>
+                <option value="Convertible" {% if car.body_style == "Convertible" %}selected{% endif %}>Convertible</option>
+                <option value="Other" {% if car.body_style == "Other" %}selected{% endif %}>Other</option>
+            </select>
+
+            <input type="text" name="exterior_color" placeholder="Exterior color" value="{{ car.exterior_color or '' }}">
+            <input type="text" name="interior_color" placeholder="Interior color" value="{{ car.interior_color or '' }}">
+            <input type="number" name="doors" placeholder="Doors" value="{{ car.doors or '' }}">
+            <input type="number" name="seats" placeholder="Seats" value="{{ car.seats or '' }}">
+            <input type="text" name="horsepower" placeholder="Horsepower" value="{{ car.horsepower or '' }}">
+
+            <select name="turbo">
+                <option value="">Turbo</option>
+                <option value="Yes" {% if car.turbo == "Yes" %}selected{% endif %}>Yes</option>
+                <option value="No" {% if car.turbo == "No" %}selected{% endif %}>No</option>
+                <option value="Unknown" {% if car.turbo == "Unknown" %}selected{% endif %}>Unknown</option>
+            </select>
+
+            <input type="text" name="vin" placeholder="VIN" value="{{ car.vin or '' }}">
+            <input type="text" name="location" placeholder="Location" value="{{ car.location or '' }}">
+        </div>
+    </section>
+
+    <hr>
+
+    <section class="admin-form-section">
+        <div class="section-head">
+            <h3>Seller & legal</h3>
+            <p>Ownership, legal clarity and seller contact information.</p>
+        </div>
+
+        <div class="admin-form-grid admin-form-grid-3">
+            <input type="text" name="contact_phone" placeholder="Seller phone" value="{{ car.contact_phone or '' }}">
+            <input type="email" name="contact_email" placeholder="Seller email" value="{{ car.contact_email or '' }}">
+            <input type="text" name="contact_facebook" placeholder="Seller Facebook profile/link" value="{{ car.contact_facebook or '' }}">
+
+            <select name="seller_type">
+                <option value="">Seller type</option>
+                <option value="Private" {% if car.seller_type == "Private" %}selected{% endif %}>Private</option>
+                <option value="Dealer" {% if car.seller_type == "Dealer" %}selected{% endif %}>Dealer</option>
+                <option value="Unknown" {% if car.seller_type == "Unknown" %}selected{% endif %}>Unknown</option>
+            </select>
+
+            <select name="seller_status">
+                <option value="">Seller status</option>
+                <option value="Owner" {% if car.seller_status == "Owner" %}selected{% endif %}>Owner</option>
+                <option value="Broker" {% if car.seller_status == "Broker" %}selected{% endif %}>Broker</option>
+                <option value="Dealer Rep" {% if car.seller_status == "Dealer Rep" %}selected{% endif %}>Dealer Rep</option>
+                <option value="Unknown" {% if car.seller_status == "Unknown" %}selected{% endif %}>Unknown</option>
+            </select>
+
+            <select name="title_status">
+                <option value="">Title status</option>
+                <option value="Clean" {% if car.title_status == "Clean" %}selected{% endif %}>Clean</option>
+                <option value="Rebuilt" {% if car.title_status == "Rebuilt" %}selected{% endif %}>Rebuilt</option>
+                <option value="Salvage" {% if car.title_status == "Salvage" %}selected{% endif %}>Salvage</option>
+                <option value="Unknown" {% if car.title_status == "Unknown" %}selected{% endif %}>Unknown</option>
+            </select>
+
+            <select name="lien_status">
+                <option value="">Lien status</option>
+                <option value="No lien" {% if car.lien_status == "No lien" %}selected{% endif %}>No lien</option>
+                <option value="Lien present" {% if car.lien_status == "Lien present" %}selected{% endif %}>Lien present</option>
+                <option value="Unknown" {% if car.lien_status == "Unknown" %}selected{% endif %}>Unknown</option>
+            </select>
+
+            <select name="rebuilt_status">
+                <option value="">Rebuilt status</option>
+                <option value="No" {% if car.rebuilt_status == "No" %}selected{% endif %}>No</option>
+                <option value="Yes" {% if car.rebuilt_status == "Yes" %}selected{% endif %}>Yes</option>
+                <option value="Unknown" {% if car.rebuilt_status == "Unknown" %}selected{% endif %}>Unknown</option>
+            </select>
+
+            <select name="accident_history">
+                <option value="">Accident history</option>
+                <option value="No accidents" {% if car.accident_history == "No accidents" %}selected{% endif %}>No accidents</option>
+                <option value="Minor accident" {% if car.accident_history == "Minor accident" %}selected{% endif %}>Minor accident</option>
+                <option value="Major accident" {% if car.accident_history == "Major accident" %}selected{% endif %}>Major accident</option>
+                <option value="Unknown" {% if car.accident_history == "Unknown" %}selected{% endif %}>Unknown</option>
+            </select>
+        </div>
+    </section>
+
+    <hr>
+
+    <section class="admin-form-section">
+        <div class="section-head">
+            <h3>Condition notes</h3>
+            <p>Mechanical, cosmetic and general condition notes.</p>
+        </div>
+
+        <div class="admin-form-grid admin-form-grid-2">
+            <select name="condition">
+                <option value="">Condition</option>
+                <option value="Excellent" {% if car.condition == "Excellent" %}selected{% endif %}>Excellent</option>
+                <option value="Good" {% if car.condition == "Good" %}selected{% endif %}>Good</option>
+                <option value="Fair" {% if car.condition == "Fair" %}selected{% endif %}>Fair</option>
+                <option value="Poor" {% if car.condition == "Poor" %}selected{% endif %}>Poor</option>
+                <option value="Unknown" {% if car.condition == "Unknown" %}selected{% endif %}>Unknown</option>
+            </select>
+
+            <textarea name="mods" placeholder="Mods">{{ car.mods or '' }}</textarea>
+            <textarea name="rust" placeholder="Rust">{{ car.rust or '' }}</textarea>
+            <textarea name="issues" placeholder="Issues">{{ car.issues or '' }}</textarea>
+            <textarea name="maintenance" placeholder="Maintenance">{{ car.maintenance or '' }}</textarea>
+            <textarea name="tires" placeholder="Tires">{{ car.tires or '' }}</textarea>
+            <textarea name="brakes" placeholder="Brakes">{{ car.brakes or '' }}</textarea>
+            <textarea name="suspension" placeholder="Suspension">{{ car.suspension or '' }}</textarea>
+            <textarea name="extras" placeholder="Extras">{{ car.extras or '' }}</textarea>
+        </div>
+
+        <textarea name="notes" placeholder="Internal notes">{{ car.notes or '' }}</textarea>
+    </section>
+
+    <hr>
+
+    <section class="admin-form-section">
+        <div class="section-head">
+            <h3>Actions</h3>
+            <p>Update the listing with the current values.</p>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" name="save_mode" value="draft">Save as draft</button>
+            <button type="submit" name="save_mode" value="publish">Publish</button>
+            <button type="submit" name="save_mode" value="archive">Archive</button>
+        </div>
+    </section>
+</form>
+{% endblock %}

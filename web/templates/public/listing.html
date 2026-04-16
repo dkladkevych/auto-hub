@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "public/base.html" %}
 
 {% block meta_description %}
 {{ car.title }} for ${{ car.price }}. {{ car.description[:120] }}...
@@ -52,6 +52,11 @@
     </section>
 
     <aside class="details-card">
+        {% if car.status == "archived" %}
+            <div class="archived-banner">
+                This listing is archived and may no longer be available.
+            </div>
+        {% endif %}
         <h1 class="listing-title">{{ car.title }}</h1>
         <p class="listing-price">${{ car.price }}</p>
         <p class="risk-pill {{ car.risk_level|lower }}">{{ car.risk_level }}</p>

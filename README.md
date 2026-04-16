@@ -1,8 +1,8 @@
 # Auto-Hub
 
-AutoHub is a manual-first system for finding better used cars under $15k.
+Auto-Hub is a manual-first system for finding better used cars under $15k.
 
-Instead of browsing through hundreds of low-quality or risky listings, AutoHub filters the market and highlights only the options that are actually worth checking.
+Instead of browsing through hundreds of low-quality or risky listings, Auto-Hub filters the market and highlights only the options that are actually worth checking.
 
 Each listing includes:
 - basic car info
@@ -16,7 +16,7 @@ save time, reduce risk, and make the car search process cleaner.
 
 ## How it works
 
-AutoHub is not a marketplace.
+Auto-Hub is not a marketplace.
 
 It is:
 - a filter
@@ -74,7 +74,7 @@ auto-hub/
 - notes = value
 - simple > complex
 
-AutoHub is not built by code.
+Auto-Hub is not built by code.
 
 It is built by:
 - filtering
@@ -105,7 +105,7 @@ Currently focused on:
 
 ## Disclaimer
 
-AutoHub does not guarantee vehicle quality.
+Auto-Hub does not guarantee vehicle quality.
 
 Risk levels and notes are subjective and based on visible information.
 
