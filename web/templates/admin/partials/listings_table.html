@@ -9,6 +9,7 @@
                 <th>Preview</th>
                 <th>Title</th>
                 <th>Price</th>
+                <th>Views</th>
                 <th>Risk</th>
                 <th>Status</th>
                 <th>Action</th>
@@ -29,6 +30,8 @@
                 <td class="col-title">{{ car.title }}</td>
 
                 <td class="col-price">${{ car.price }}</td>
+
+                <td class="col-views">{{ car.view_count }}</td>
 
                 <td class="col-risk">
                     <span class="risk-pill {{ car.risk_level|lower }}">{{ car.risk_level }}</span>

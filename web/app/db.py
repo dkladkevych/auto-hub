@@ -1,3 +1,4 @@
+import os
 import sqlite3
 
 from .config import Config
@@ -19,6 +20,9 @@ def init_db():
 
     Важно: это должно вызываться и при локальном запуске, и при gunicorn.
     """
+    os.makedirs(Config.DB_DIR, exist_ok=True)
+    os.makedirs(Config.LISTINGS_DIR, exist_ok=True)
+
     conn = sqlite3.connect(Config.DB_PATH)
     conn.execute("PRAGMA foreign_keys = ON")
 
@@ -52,7 +56,22 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             listing_id INTEGER NOT NULL,
             image_url TEXT NOT NULL,
-            sort_order INTEGER NOT NULL DEFAULT 0,
+            FOREIGN KEY (listing_id) REFERENCES listings(id) ON DELETE CASCADE
+        )
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS site_visits (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            visited_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS listing_views (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            listing_id INTEGER NOT NULL,
+            viewed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (listing_id) REFERENCES listings(id) ON DELETE CASCADE
         )
     """)

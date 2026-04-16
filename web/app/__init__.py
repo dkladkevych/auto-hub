@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, send_from_directory
 
 from .config import Config
 from .context import inject_admin_path
@@ -25,6 +25,10 @@ def create_app() -> Flask:
         url_prefix=f"/{app.config['ADMIN_PATH']}",
     )
     app.register_blueprint(pages_bp)
+
+    @app.route("/data/<path:filename>")
+    def data_file(filename):
+        return send_from_directory(Config.DATA_DIR, filename)
 
     @app.errorhandler(404)
     def not_found(_error):

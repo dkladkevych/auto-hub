@@ -12,6 +12,11 @@ from ..services.admin import (
     update_listing,
     validate_listing_form,
 )
+from ..utils.images import (
+    delete_listing_images,
+    sync_listing_images,
+    validate_images,
+)
 
 admin_bp = Blueprint("admin", __name__)
 
@@ -57,7 +62,20 @@ def admin_new():
         if error:
             return render_template("admin/new.html", error=error)
 
-        create_listing(data)
+        uploaded_files = request.files.getlist("images")
+        img_error = validate_images(uploaded_files)
+        if img_error:
+            return render_template("admin/new.html", error=img_error)
+
+        listing_id = create_listing(data)
+
+        try:
+            sync_listing_images(listing_id, [], uploaded_files)
+        except ValueError as e:
+            delete_listing_by_id(listing_id)
+            delete_listing_images(listing_id)
+            return render_template("admin/new.html", error=str(e))
+
         return redirect(url_for("admin.admin_dashboard"))
 
     return render_template("admin/new.html", error=None)
@@ -66,6 +84,7 @@ def admin_new():
 @admin_bp.route("/delete/<int:id>", methods=["POST"])
 @admin_required
 def delete_listing(id):
+    delete_listing_images(id)
     delete_listing_by_id(id)
     return redirect(url_for("admin.admin_dashboard"))
 
@@ -74,7 +93,6 @@ def delete_listing(id):
 @admin_required
 def admin_edit(id):
     car, existing_images = get_listing_for_edit(id)
-    image_urls_text = "\n".join([img["image_url"] for img in existing_images])
 
     if request.method == "POST":
         data = parse_listing_form(request.form)
@@ -85,18 +103,44 @@ def admin_edit(id):
                 "admin/edit.html",
                 car=car,
                 existing_images=existing_images,
-                image_urls_text=image_urls_text,
                 error=error,
             )
 
+        uploaded_files = request.files.getlist("images")
+        keep_images = request.form.getlist("keep_images")
+
+        img_error = validate_images(uploaded_files)
+        if img_error:
+            return render_template(
+                "admin/edit.html",
+                car=car,
+                existing_images=existing_images,
+                error=img_error,
+            )
+
         update_listing(id, data)
+
+        has_any = keep_images or (uploaded_files and any(f and f.filename for f in uploaded_files))
+
+        if has_any:
+            try:
+                sync_listing_images(id, keep_images, uploaded_files)
+            except ValueError as e:
+                return render_template(
+                    "admin/edit.html",
+                    car=car,
+                    existing_images=existing_images,
+                    error=str(e),
+                )
+        else:
+            delete_listing_images(id)
+
         return redirect(url_for("admin.admin_dashboard"))
 
     return render_template(
         "admin/edit.html",
         car=car,
         existing_images=existing_images,
-        image_urls_text=image_urls_text,
         error=None,
     )
 
@@ -121,6 +165,7 @@ def archive_listing(id):
 def unarchive_listing(id):
     set_listing_status(id, "active")
     return redirect(url_for("admin.admin_dashboard"))
+
 
 @admin_bp.route("/publish/<int:id>", methods=["POST"])
 @admin_required

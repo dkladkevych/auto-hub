@@ -13,4 +13,7 @@ class Config:
     ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "fallback_password")
     ADMIN_PATH = os.getenv("ADMIN_PATH", "admin")
 
-    DB_PATH = os.path.join(BASE_DIR, "db.sqlite")
+    DATA_DIR = os.path.join(BASE_DIR, "data")
+    DB_DIR = os.path.join(DATA_DIR, "db")
+    LISTINGS_DIR = os.path.join(DATA_DIR, "listings")
+    DB_PATH = os.path.join(DB_DIR, "db.sqlite")

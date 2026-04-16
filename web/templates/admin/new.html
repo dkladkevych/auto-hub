@@ -18,7 +18,7 @@
     <p class="error-text">{{ error }}</p>
 {% endif %}
 
-<form method="POST" class="form-card admin-form">
+<form method="POST" enctype="multipart/form-data" class="form-card admin-form">
     <section class="admin-form-section">
         <div class="section-head">
             <h3>Basics</h3>
@@ -40,7 +40,12 @@
         <input type="text" name="source_url" placeholder="Source URL">
 
         <textarea name="description" placeholder="Public description" required></textarea>
-        <textarea name="image_urls" placeholder="One image URL per line"></textarea>
+
+        <div class="drop-zone" id="dropZone">
+            <p>Drag & drop images here or click to browse</p>
+            <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.webp">
+        </div>
+        <div class="img-gallery" id="imageGallery"></div>
     </section>
 
     <hr>
@@ -93,4 +98,18 @@
         </div>
     </section>
 </form>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/admin_images.js') }}"></script>
+<script>
+ImageUploader({
+    containerId: 'imageGallery',
+    dropZoneId: 'dropZone',
+    fileInputId: 'fileInput',
+    formSelector: 'form.admin-form',
+    adminPath: '{{ ADMIN_PATH }}',
+    initial: []
+});
+</script>
 {% endblock %}

@@ -1,6 +1,7 @@
 from flask import abort
 
 from ..db import get_db
+from ..utils.images import get_preview_image
 from ..utils.location import build_location_search
 
 from ..constants import (
@@ -29,6 +30,21 @@ def _build_title(year, make, model):
     return " ".join(str(p) for p in parts)
 
 
+def _enrich_preview_and_stats(db, listings):
+    """Добавляет preview_image и view_count к каждому объявлению."""
+    result = []
+    for row in listings:
+        d = dict(row)
+        d["preview_image"] = get_preview_image(d["id"])
+        views = db.execute(
+            "SELECT COUNT(*) AS count FROM listing_views WHERE listing_id = ?",
+            (d["id"],),
+        ).fetchone()["count"]
+        d["view_count"] = views
+        result.append(d)
+    return result
+
+
 def get_dashboard_data(page: int, per_page: int = 10):
     """Статы и пагинация админки."""
     offset = (page - 1) * per_page
@@ -38,23 +54,19 @@ def get_dashboard_data(page: int, per_page: int = 10):
     active_count = db.execute("SELECT COUNT(*) AS count FROM listings WHERE status = 'active'").fetchone()["count"]
     archived_count = db.execute("SELECT COUNT(*) AS count FROM listings WHERE status = 'archived'").fetchone()["count"]
     draft_count = db.execute("SELECT COUNT(*) AS count FROM listings WHERE status = 'draft'").fetchone()["count"]
+    total_site_visits = db.execute("SELECT COUNT(*) AS count FROM site_visits").fetchone()["count"]
+    total_listing_views = db.execute("SELECT COUNT(*) AS count FROM listing_views").fetchone()["count"]
 
     total_pages = max(1, (total_count + per_page - 1) // per_page)
 
-    listings = db.execute("""
-        SELECT
-            l.*,
-            (
-                SELECT li.image_url
-                FROM listing_images li
-                WHERE li.listing_id = l.id
-                ORDER BY li.sort_order ASC, li.id ASC
-                LIMIT 1
-            ) AS preview_image
-        FROM listings l
-        ORDER BY l.created_at DESC
+    rows = db.execute("""
+        SELECT *
+        FROM listings
+        ORDER BY created_at DESC
         LIMIT ? OFFSET ?
     """, (per_page, offset)).fetchall()
+
+    listings_with_stats = _enrich_preview_and_stats(db, rows)
 
     db.close()
 
@@ -63,7 +75,9 @@ def get_dashboard_data(page: int, per_page: int = 10):
         "draft_count": draft_count,
         "active_count": active_count,
         "archived_count": archived_count,
-        "listings": listings,
+        "total_site_visits": total_site_visits,
+        "total_listing_views": total_listing_views,
+        "listings": listings_with_stats,
         "page": page,
         "total_pages": total_pages,
     }
@@ -77,25 +91,19 @@ def get_dashboard_listings_block(page: int, per_page: int = 10):
     total_count = db.execute("SELECT COUNT(*) AS count FROM listings").fetchone()["count"]
     total_pages = max(1, (total_count + per_page - 1) // per_page)
 
-    listings = db.execute("""
-        SELECT
-            l.*,
-            (
-                SELECT li.image_url
-                FROM listing_images li
-                WHERE li.listing_id = l.id
-                ORDER BY li.sort_order ASC, li.id ASC
-                LIMIT 1
-            ) AS preview_image
-        FROM listings l
-        ORDER BY l.created_at DESC
+    rows = db.execute("""
+        SELECT *
+        FROM listings
+        ORDER BY created_at DESC
         LIMIT ? OFFSET ?
     """, (per_page, offset)).fetchall()
+
+    listings_with_stats = _enrich_preview_and_stats(db, rows)
 
     db.close()
 
     return {
-        "listings": listings,
+        "listings": listings_with_stats,
         "page": page,
         "total_pages": total_pages,
     }
@@ -122,7 +130,6 @@ def parse_listing_form(form):
         "description": form.get("description", "").strip(),
         "risk_level": form.get("risk_level", "").strip(),
         "source_url": form.get("source_url", "").strip(),
-        "image_urls_raw": form.get("image_urls", "").strip(),
 
         "year": year,
         "make": make,
@@ -141,7 +148,6 @@ def parse_listing_form(form):
     data["seller_status"] = normalize_choice(data["seller_status"], SELLER_STATUS_OPTIONS)
 
     data["location_search"] = build_location_search(data["location"])
-    data["image_urls"] = [line.strip() for line in data["image_urls_raw"].splitlines() if line.strip()]
 
     return data
 
@@ -163,7 +169,7 @@ def validate_listing_form(data):
 
 
 def create_listing(data):
-    """Создает новое объявление и связанные изображения."""
+    """Создает новое объявление. Возвращает listing_id."""
     db = get_db()
 
     cursor = db.execute("""
@@ -180,15 +186,9 @@ def create_listing(data):
     ))
 
     listing_id = cursor.lastrowid
-
-    for index, image_url in enumerate(data["image_urls"]):
-        db.execute("""
-            INSERT INTO listing_images (listing_id, image_url, sort_order)
-            VALUES (?, ?, ?)
-        """, (listing_id, image_url, index))
-
     db.commit()
     db.close()
+    return listing_id
 
 
 def get_listing_for_edit(listing_id: int):
@@ -206,10 +206,10 @@ def get_listing_for_edit(listing_id: int):
         abort(404)
 
     existing_images = db.execute("""
-        SELECT *
+        SELECT image_url
         FROM listing_images
         WHERE listing_id = ?
-        ORDER BY sort_order ASC, id ASC
+        ORDER BY image_url ASC
     """, (listing_id,)).fetchall()
 
     db.close()
@@ -217,7 +217,7 @@ def get_listing_for_edit(listing_id: int):
 
 
 def update_listing(listing_id: int, data):
-    """Обновляет объявление и полностью пересоздает image list."""
+    """Обновляет объявление (без изображений)."""
     db = get_db()
 
     db.execute("""
@@ -245,14 +245,6 @@ def update_listing(listing_id: int, data):
         data["condition"], data["notes"], data["seller_status"],
         listing_id,
     ))
-
-    db.execute("DELETE FROM listing_images WHERE listing_id = ?", (listing_id,))
-
-    for index, image_url in enumerate(data["image_urls"]):
-        db.execute("""
-            INSERT INTO listing_images (listing_id, image_url, sort_order)
-            VALUES (?, ?, ?)
-        """, (listing_id, image_url, index))
 
     db.commit()
     db.close()

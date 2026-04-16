@@ -1,3 +1,6 @@
 web/.env
+web/.venv
 web/venv
+web/data/
+web/db.sqlite
 check.html

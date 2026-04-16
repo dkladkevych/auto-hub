@@ -1,12 +1,14 @@
 from flask import Blueprint, render_template, request
 
 from ..services.listings import get_home_listings, get_listing_page_data
+from ..utils.stats import log_listing_view, log_site_visit
 
 public_bp = Blueprint("public", __name__)
 
 
 @public_bp.route("/")
 def home():
+    log_site_visit()
     listings, has_any_filter = get_home_listings(request.args)
 
     return render_template(
@@ -19,6 +21,7 @@ def home():
 
 @public_bp.route("/listing/<int:id>")
 def listing(id):
+    log_listing_view(id)
     car, images = get_listing_page_data(id)
 
     return render_template(

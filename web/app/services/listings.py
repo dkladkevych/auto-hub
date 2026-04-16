@@ -1,6 +1,7 @@
 from flask import abort
 
 from ..db import get_db
+from ..utils.images import get_listing_image_urls, get_preview_image
 from ..utils.location import build_location_search
 
 
@@ -38,17 +39,9 @@ def get_home_listings(filters):
     ])
 
     query = """
-        SELECT
-            l.*,
-            (
-                SELECT li.image_url
-                FROM listing_images li
-                WHERE li.listing_id = l.id
-                ORDER BY li.sort_order ASC, li.id ASC
-                LIMIT 1
-            ) AS preview_image
-        FROM listings l
-        WHERE l.status = 'active'
+        SELECT *
+        FROM listings
+        WHERE status = 'active'
     """
 
     params = []
@@ -56,11 +49,11 @@ def get_home_listings(filters):
     if q:
         query += """
             AND (
-                l.title LIKE ?
-                OR l.make LIKE ?
-                OR l.model LIKE ?
-                OR l.description LIKE ?
-                OR l.location LIKE ?
+                title LIKE ?
+                OR make LIKE ?
+                OR model LIKE ?
+                OR description LIKE ?
+                OR location LIKE ?
             )
         """
         like = f"%{q}%"
@@ -72,19 +65,19 @@ def get_home_listings(filters):
         if include_unknown:
             query += """
                 AND (
-                    l.location_search LIKE ?
-                    OR l.location LIKE ?
-                    OR l.location IS NULL
-                    OR l.location = ''
-                    OR l.location_search IS NULL
-                    OR l.location_search = ''
+                    location_search LIKE ?
+                    OR location LIKE ?
+                    OR location IS NULL
+                    OR location = ''
+                    OR location_search IS NULL
+                    OR location_search = ''
                 )
             """
         else:
             query += """
                 AND (
-                    l.location_search LIKE ?
-                    OR l.location LIKE ?
+                    location_search LIKE ?
+                    OR location LIKE ?
                 )
             """
 
@@ -92,38 +85,44 @@ def get_home_listings(filters):
         params.append(f"%{location}%")
 
     if price_min is not None:
-        query += " AND l.price >= ?"
+        query += " AND price >= ?"
         params.append(price_min)
 
     if price_max is not None:
-        query += " AND l.price <= ?"
+        query += " AND price <= ?"
         params.append(price_max)
 
     if year_min is not None:
-        query += " AND l.year >= ?"
+        query += " AND year >= ?"
         params.append(year_min)
 
     if year_max is not None:
-        query += " AND l.year <= ?"
+        query += " AND year <= ?"
         params.append(year_max)
 
     if mileage_min is not None:
-        query += " AND l.mileage_km >= ?"
+        query += " AND mileage_km >= ?"
         params.append(mileage_min)
 
     if mileage_max is not None:
-        query += " AND l.mileage_km <= ?"
+        query += " AND mileage_km <= ?"
         params.append(mileage_max)
 
     if risk_level:
-        query += " AND l.risk_level = ?"
+        query += " AND risk_level = ?"
         params.append(risk_level)
 
-    query += " ORDER BY l.created_at DESC"
+    query += " ORDER BY created_at DESC"
 
     db = get_db()
-    listings = db.execute(query, params).fetchall()
+    rows = db.execute(query, params).fetchall()
     db.close()
+
+    listings = []
+    for row in rows:
+        d = dict(row)
+        d["preview_image"] = get_preview_image(d["id"])
+        listings.append(d)
 
     return listings, has_any_filter
 
@@ -146,13 +145,9 @@ def get_listing_page_data(listing_id: int):
         db.close()
         abort(404)
 
-    images = db.execute("""
-        SELECT *
-        FROM listing_images
-        WHERE listing_id = ?
-        ORDER BY sort_order ASC, id ASC
-    """, (listing_id,)).fetchall()
-
     db.close()
+
+    image_urls = get_listing_image_urls(listing_id)
+    images = [{"image_url": url} for url in image_urls]
 
     return car, images
