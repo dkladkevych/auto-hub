@@ -13,7 +13,7 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ request.url }}">
     <meta property="og:image" content="{% block og_image %}/static/images/preview.jpg{% endblock %}">
-    <link rel="icon" href="/static/images/icon.ico">
+    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
 </head>
 <body>
     <header class="header">
