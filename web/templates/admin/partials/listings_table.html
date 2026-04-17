@@ -20,11 +20,7 @@
             {% for car in listings %}
             <tr>
                 <td class="col-preview">
-                    {% if car.preview_image %}
-                        <img class="admin-thumb" src="{{ car.preview_image }}" alt="{{ car.title }}">
-                    {% else %}
-                        <div class="empty-thumb">No image</div>
-                    {% endif %}
+                    <img class="admin-thumb" src="{{ car.preview_image }}" alt="{{ car.title }}">
                 </td>
 
                 <td class="col-title">{{ car.title }}</td>

@@ -1,3 +1,12 @@
+/**
+ * base.css
+ *
+ * Базовая дизайн-система: CSS-переменные, типографика, кнопки,
+ * pills, формы, утилитарные классы и общие responsive-правила.
+ *
+ * Используется всеми страницами (public + admin).
+ */
+
 :root {
     --bg: #f3f0eb;
     --surface: #fcfbf8;
@@ -14,6 +23,111 @@
     --radius-lg: 20px;
     --radius-md: 14px;
     --radius-sm: 10px;
+    --header-bg: rgba(252, 251, 248, 0.92);
+    --footer-bg: rgba(252, 251, 248, 0.88);
+}
+
+[data-theme="dark"] {
+    --bg: #1a1917;
+    --surface: #242320;
+    --surface-2: #2e2c29;
+    --border: #3d3a36;
+    --text: #f0ece6;
+    --muted: #a39b91;
+    --accent: #b89b6f;
+    --accent-hover: #c9ac80;
+    --low: #7fb88a;
+    --medium: #d4a76a;
+    --high: #c97a72;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+    --header-bg: rgba(36, 35, 32, 0.92);
+    --footer-bg: rgba(36, 35, 32, 0.88);
+}
+
+/* ========== Theme toggle ========== */
+
+.theme-toggle {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.18s ease;
+}
+
+.theme-toggle:hover {
+    background: var(--surface-2);
+}
+
+.theme-toggle svg {
+    width: 20px;
+    height: 20px;
+}
+
+.theme-icon-sun {
+    display: none;
+}
+
+.theme-icon-moon {
+    display: block;
+}
+
+[data-theme="dark"] .theme-icon-sun {
+    display: block;
+}
+
+[data-theme="dark"] .theme-icon-moon {
+    display: none;
+}
+
+/* ========== Favorite button ========== */
+
+.favorite-btn {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.18s ease;
+}
+
+.favorite-btn:hover {
+    background: var(--surface-2);
+    color: var(--high);
+}
+
+.favorite-btn.is-active {
+    background: rgba(184, 106, 99, 0.14);
+    border-color: rgba(184, 106, 99, 0.25);
+    color: var(--high);
+}
+
+.favorite-btn svg {
+    width: 20px;
+    height: 20px;
+}
+
+.favorite-btn svg path {
+    fill: currentColor;
+    fill-opacity: 0;
+    stroke: currentColor;
+    transition: fill-opacity 0.18s ease;
+}
+
+.favorite-btn.is-active svg path {
+    fill-opacity: 1;
 }
 
 /* ========== Base ========== */
@@ -199,7 +313,7 @@ select {
     padding: 14px 15px;
     border: 1px solid var(--border);
     border-radius: 14px;
-    background: #fffdfa;
+    background: var(--surface);
     color: var(--text);
     outline: none;
     transition: border-color 0.18s ease, box-shadow 0.18s ease;
@@ -232,7 +346,7 @@ form button[type="submit"]:hover {
 
 .error-text {
     margin: 0 0 12px;
-    color: #a2554d;
+    color: var(--high);
 }
 
 /* ========== Shared utility states ========== */

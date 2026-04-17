@@ -27,8 +27,9 @@ def init_db():
     conn.execute("PRAGMA foreign_keys = ON")
 
     conn.execute("""
-        CREATE TABLE IF NOT EXISTS listings (
+        CREATE TABLE IF NOT EXISTS inventory (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id INTEGER NOT NULL DEFAULT 0,
 
             title TEXT NOT NULL,
             price INTEGER NOT NULL,
@@ -42,7 +43,6 @@ def init_db():
             model TEXT,
             mileage_km INTEGER,
             location TEXT,
-            location_search TEXT,
             condition TEXT,
             notes TEXT,
             seller_status TEXT,
@@ -52,27 +52,11 @@ def init_db():
     """)
 
     conn.execute("""
-        CREATE TABLE IF NOT EXISTS listing_images (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            listing_id INTEGER NOT NULL,
-            image_url TEXT NOT NULL,
-            FOREIGN KEY (listing_id) REFERENCES listings(id) ON DELETE CASCADE
-        )
-    """)
-
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS site_visits (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            visited_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS listing_views (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            listing_id INTEGER NOT NULL,
-            viewed_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (listing_id) REFERENCES listings(id) ON DELETE CASCADE
+        CREATE TABLE IF NOT EXISTS stats (
+            target_type TEXT NOT NULL CHECK(target_type IN ('site', 'listing')),
+            target_id INTEGER NOT NULL DEFAULT 0,
+            view_count INTEGER DEFAULT 0,
+            PRIMARY KEY (target_type, target_id)
         )
     """)
 

@@ -1,0 +1,60 @@
+{% extends "public/base.html" %}
+
+{% block meta_description %}
+Your saved car listings on Auto-Hub.
+{% endblock %}
+
+{% block og_title %}Saved Cars | Auto-Hub{% endblock %}
+
+{% block og_description %}
+Your saved car listings on Auto-Hub.
+{% endblock %}
+
+{% block title %}Saved Cars | Auto-Hub{% endblock %}
+
+{% block content %}
+<h2 class="page-title">Saved Cars</h2>
+
+{% if listings %}
+    <div class="grid">
+        {% for car in listings %}
+        <article class="card">
+            <a class="card-media" href="/listing/{{ car.id }}">
+                {% if car.status == "demo" %}<div class="demo-ribbon">Demo</div>{% endif %}
+                <img src="{{ car.preview_image }}" alt="{{ car.title }}" loading="lazy">
+            </a>
+
+            <div class="card-body">
+                <div class="card-head-row">
+                    <h3>{{ car.title }}</h3>
+                    <button type="button" class="favorite-btn is-active" data-favorite="{{ car.id }}" aria-label="Toggle favorite" aria-pressed="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 6.00019C10.2006 3.90317 7.19377 3.2551 4.93923 5.17534C2.68468 7.09558 2.36727 10.3061 4.13778 12.5772C5.60984 14.4654 10.0648 18.4479 11.5249 19.7369C11.6882 19.8811 11.7699 19.9532 11.8652 19.9815C11.9483 20.0062 12.0393 20.0062 12.1225 19.9815C12.2178 19.9532 12.2994 19.8811 12.4628 19.7369C13.9229 18.4479 18.3778 14.4654 19.8499 12.5772C21.6204 10.3061 21.3417 7.07538 19.0484 5.17534C16.7551 3.2753 13.7994 3.90317 12 6.00019Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                </div>
+                <p class="price">${{ car.price }}</p>
+
+                <div class="card-mini-specs">
+                    {% if car.mileage_km %}<span>{{ car.mileage_km }} km</span>{% endif %}
+                    {% if car.location %}<span>{{ car.location }}</span>{% endif %}
+                </div>
+
+                <p class="risk-pill {{ car.risk_level|lower }}">
+                    {{ car.risk_level }}
+                </p>
+
+                <p class="desc">
+                    {{ car.description[:120] }}{% if car.description|length > 120 %}...{% endif %}
+                </p>
+
+                <a class="btn" href="/listing/{{ car.id }}">View listing</a>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="empty-state">
+        <h3>No saved cars</h3>
+        <p>You haven't saved any listings yet.</p>
+        <p>Browse cars and click ❤️ to save them here.</p>
+        <a href="/" class="btn">Browse cars</a>
+    </div>
+{% endif %}
+{% endblock %}

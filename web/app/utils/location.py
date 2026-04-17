@@ -1,3 +1,13 @@
+"""
+Нормализация локаций для гибкого поиска.
+
+Преобразует строку локации в набор токенов с алиасами:
+- провинции Канады (on ↔ ontario, bc ↔ british columbia)
+- города GTA (mississauga, brampton → добавляет gta, toronto)
+
+Используется при поиске объявлений (services/listings.py).
+"""
+
 import re
 
 

@@ -54,16 +54,6 @@
     {% include "admin/partials/listings_table.html" %}
 </div>
 
-<script>
-async function loadAdminPage(page) {
-    const block = document.getElementById("adminListingsBlock");
-    const response = await fetch(`/{{ ADMIN_PATH }}/listings-block?page=${page}`);
-    const html = await response.text();
-    block.innerHTML = html;
-
-    const url = new URL(window.location);
-    url.searchParams.set("page", page);
-    window.history.replaceState({}, "", url);
-}
-</script>
+<script>window.ADMIN_PATH = "{{ ADMIN_PATH }}";</script>
+<script src="{{ url_for('static', filename='js/admin_dashboard.js') }}"></script>
 {% endblock %}

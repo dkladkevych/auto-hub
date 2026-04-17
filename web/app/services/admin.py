@@ -1,7 +1,18 @@
+"""
+Бизнес-логика админ-панели.
+
+- CRUD операции с таблицей inventory
+- Валидация форм создания/редактирования объявлений
+- Статистика дашборда (JOIN с таблицей stats)
+- Парсинг форм и нормализация данных
+
+Связан с: db (inventory + stats), utils/images (превью), utils/location (нормализация).
+"""
+
 from flask import abort
 
 from ..db import get_db
-from ..utils.images import get_preview_image
+from ..utils.images import get_preview_image, get_listing_image_urls
 from ..utils.location import build_location_search
 
 from ..constants import (
@@ -30,44 +41,42 @@ def _build_title(year, make, model):
     return " ".join(str(p) for p in parts)
 
 
-def _enrich_preview_and_stats(db, listings):
-    """Добавляет preview_image и view_count к каждому объявлению."""
-    result = []
-    for row in listings:
-        d = dict(row)
-        d["preview_image"] = get_preview_image(d["id"])
-        views = db.execute(
-            "SELECT COUNT(*) AS count FROM listing_views WHERE listing_id = ?",
-            (d["id"],),
-        ).fetchone()["count"]
-        d["view_count"] = views
-        result.append(d)
-    return result
-
-
 def get_dashboard_data(page: int, per_page: int = 10):
     """Статы и пагинация админки."""
     offset = (page - 1) * per_page
     db = get_db()
 
-    total_count = db.execute("SELECT COUNT(*) AS count FROM listings").fetchone()["count"]
-    active_count = db.execute("SELECT COUNT(*) AS count FROM listings WHERE status = 'active'").fetchone()["count"]
-    archived_count = db.execute("SELECT COUNT(*) AS count FROM listings WHERE status = 'archived'").fetchone()["count"]
-    draft_count = db.execute("SELECT COUNT(*) AS count FROM listings WHERE status = 'draft'").fetchone()["count"]
-    demo_count = db.execute("SELECT COUNT(*) AS count FROM listings WHERE status = 'demo'").fetchone()["count"]
-    total_site_visits = db.execute("SELECT COUNT(*) AS count FROM site_visits").fetchone()["count"]
-    total_listing_views = db.execute("SELECT COUNT(*) AS count FROM listing_views").fetchone()["count"]
+    total_count = db.execute("SELECT COUNT(*) AS count FROM inventory").fetchone()["count"]
+    active_count = db.execute("SELECT COUNT(*) AS count FROM inventory WHERE status = 'active'").fetchone()["count"]
+    archived_count = db.execute("SELECT COUNT(*) AS count FROM inventory WHERE status = 'archived'").fetchone()["count"]
+    draft_count = db.execute("SELECT COUNT(*) AS count FROM inventory WHERE status = 'draft'").fetchone()["count"]
+    demo_count = db.execute("SELECT COUNT(*) AS count FROM inventory WHERE status = 'demo'").fetchone()["count"]
+
+    site_visits_row = db.execute(
+        "SELECT view_count FROM stats WHERE target_type = 'site' AND target_id = 0"
+    ).fetchone()
+    total_site_visits = site_visits_row["view_count"] if site_visits_row else 0
+
+    listing_views_row = db.execute(
+        "SELECT COALESCE(SUM(view_count), 0) AS count FROM stats WHERE target_type = 'listing'"
+    ).fetchone()
+    total_listing_views = listing_views_row["count"] if listing_views_row else 0
 
     total_pages = max(1, (total_count + per_page - 1) // per_page)
 
     rows = db.execute("""
-        SELECT *
-        FROM listings
-        ORDER BY created_at DESC
+        SELECT i.*, COALESCE(s.view_count, 0) AS view_count
+        FROM inventory i
+        LEFT JOIN stats s ON s.target_type = 'listing' AND s.target_id = i.id
+        ORDER BY i.created_at DESC
         LIMIT ? OFFSET ?
     """, (per_page, offset)).fetchall()
 
-    listings_with_stats = _enrich_preview_and_stats(db, rows)
+    listings = []
+    for row in rows:
+        d = dict(row)
+        d["preview_image"] = get_preview_image(d["id"])
+        listings.append(d)
 
     db.close()
 
@@ -79,7 +88,7 @@ def get_dashboard_data(page: int, per_page: int = 10):
         "demo_count": demo_count,
         "total_site_visits": total_site_visits,
         "total_listing_views": total_listing_views,
-        "listings": listings_with_stats,
+        "listings": listings,
         "page": page,
         "total_pages": total_pages,
     }
@@ -90,22 +99,27 @@ def get_dashboard_listings_block(page: int, per_page: int = 10):
     offset = (page - 1) * per_page
     db = get_db()
 
-    total_count = db.execute("SELECT COUNT(*) AS count FROM listings").fetchone()["count"]
+    total_count = db.execute("SELECT COUNT(*) AS count FROM inventory").fetchone()["count"]
     total_pages = max(1, (total_count + per_page - 1) // per_page)
 
     rows = db.execute("""
-        SELECT *
-        FROM listings
-        ORDER BY created_at DESC
+        SELECT i.*, COALESCE(s.view_count, 0) AS view_count
+        FROM inventory i
+        LEFT JOIN stats s ON s.target_type = 'listing' AND s.target_id = i.id
+        ORDER BY i.created_at DESC
         LIMIT ? OFFSET ?
     """, (per_page, offset)).fetchall()
 
-    listings_with_stats = _enrich_preview_and_stats(db, rows)
+    listings = []
+    for row in rows:
+        d = dict(row)
+        d["preview_image"] = get_preview_image(d["id"])
+        listings.append(d)
 
     db.close()
 
     return {
-        "listings": listings_with_stats,
+        "listings": listings,
         "page": page,
         "total_pages": total_pages,
     }
@@ -151,8 +165,6 @@ def parse_listing_form(form):
     data["condition"] = normalize_choice(data["condition"], CONDITION_OPTIONS)
     data["seller_status"] = normalize_choice(data["seller_status"], SELLER_STATUS_OPTIONS)
 
-    data["location_search"] = build_location_search(data["location"])
-
     return data
 
 
@@ -177,15 +189,16 @@ def create_listing(data):
     db = get_db()
 
     cursor = db.execute("""
-        INSERT INTO listings (
-            title, price, description, risk_level, source_url, status,
-            year, make, model, mileage_km, location, location_search,
+        INSERT INTO inventory (
+            account_id, title, price, description, risk_level, source_url, status,
+            year, make, model, mileage_km, location,
             condition, notes, seller_status
         )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
+        0,
         data["title"], data["price"], data["description"], data["risk_level"], data["source_url"], data["status"],
-        data["year"], data["make"], data["model"], data["mileage_km"], data["location"], data["location_search"],
+        data["year"], data["make"], data["model"], data["mileage_km"], data["location"],
         data["condition"], data["notes"], data["seller_status"],
     ))
 
@@ -201,7 +214,7 @@ def get_listing_for_edit(listing_id: int):
 
     car = db.execute("""
         SELECT *
-        FROM listings
+        FROM inventory
         WHERE id = ?
     """, (listing_id,)).fetchone()
 
@@ -209,14 +222,8 @@ def get_listing_for_edit(listing_id: int):
         db.close()
         abort(404)
 
-    existing_images = db.execute("""
-        SELECT image_url
-        FROM listing_images
-        WHERE listing_id = ?
-        ORDER BY image_url ASC
-    """, (listing_id,)).fetchall()
-
     db.close()
+    existing_images = get_listing_image_urls(listing_id)
     return car, existing_images
 
 
@@ -225,7 +232,7 @@ def update_listing(listing_id: int, data):
     db = get_db()
 
     db.execute("""
-        UPDATE listings
+        UPDATE inventory
         SET
             title = ?,
             price = ?,
@@ -238,14 +245,13 @@ def update_listing(listing_id: int, data):
             model = ?,
             mileage_km = ?,
             location = ?,
-            location_search = ?,
             condition = ?,
             notes = ?,
             seller_status = ?
         WHERE id = ?
     """, (
         data["title"], data["price"], data["description"], data["risk_level"], data["source_url"], data["status"],
-        data["year"], data["make"], data["model"], data["mileage_km"], data["location"], data["location_search"],
+        data["year"], data["make"], data["model"], data["mileage_km"], data["location"],
         data["condition"], data["notes"], data["seller_status"],
         listing_id,
     ))
@@ -256,7 +262,7 @@ def update_listing(listing_id: int, data):
 
 def delete_listing_by_id(listing_id: int):
     db = get_db()
-    db.execute("DELETE FROM listings WHERE id = ?", (listing_id,))
+    db.execute("DELETE FROM inventory WHERE id = ?", (listing_id,))
     db.commit()
     db.close()
 
@@ -264,7 +270,7 @@ def delete_listing_by_id(listing_id: int):
 def set_listing_status(listing_id: int, status: str):
     db = get_db()
     db.execute("""
-        UPDATE listings
+        UPDATE inventory
         SET status = ?
         WHERE id = ?
     """, (status, listing_id))

@@ -1,11 +1,32 @@
+"""
+Утилиты для работы с изображениями объявлений.
+
+- Валидация загружаемых файлов (размер, формат, MIME-тип)
+- Синхронизация папки с фото (атомарная замена через temp)
+- Автоматическое создание thumbnails при сохранении (Pillow)
+- Удаление фото при удалении/редактировании объявления
+- Получение URL превью и списка картинок (оригиналы / thumbnails)
+
+Изображения хранятся в файловой системе: data/listings/{id}/01.jpg
+Thumbnails: data/listings/{id}/thumb_01.jpg
+Таблица БД для изображений не используется.
+"""
+
 import os
 import shutil
+
+from PIL import Image
 
 from ..config import Config
 
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "webp"}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
 MAX_IMAGES_PER_LISTING = 10
+
+EMPTY_IMAGE = "/static/images/empty.png"
+
+# Макс размер thumbnail для карточек на главной
+THUMB_SIZE = (640, 480)
 
 
 def _get_extension(filename):
@@ -56,6 +77,28 @@ def _filename_for_index(index: int, ext: str):
     return f"{index:02d}.{ext}"
 
 
+def _create_thumbnail(src_path: str, dst_path: str):
+    """Создаёт thumbnail через Pillow."""
+    try:
+        with Image.open(src_path) as img:
+            img.thumbnail(THUMB_SIZE)
+            img.save(dst_path, quality=85, optimize=True)
+    except Exception:
+        # Если не удалось — копируем оригинал как fallback
+        shutil.copy2(src_path, dst_path)
+
+
+def _sync_thumbnails(target_dir: str):
+    """Создаёт/обновляет thumbnails для всех оригиналов в папке."""
+    for name in os.listdir(target_dir):
+        if name.startswith(".") or name.startswith("thumb_"):
+            continue
+        src = os.path.join(target_dir, name)
+        dst = os.path.join(target_dir, f"thumb_{name}")
+        if not os.path.exists(dst):
+            _create_thumbnail(src, dst)
+
+
 def sync_listing_images(listing_id: int, existing_urls, new_files):
     """Синхронизирует папку объявления с заданным списком.
 
@@ -67,12 +110,10 @@ def sync_listing_images(listing_id: int, existing_urls, new_files):
     2. Копирует туда existing файлы в порядке existing_urls (переименовывая).
     3. Сохраняет туда new_files (переименовывая).
     4. Удаляет старую папку и заменяет на новую.
-    5. Обновляет БД (удаляет старые записи, вставляет новые пути).
+    5. Генерирует thumbnails для всех оригиналов.
 
     Возвращает список итоговых URL.
     """
-    from ..db import get_db
-
     target_dir = _listing_dir(listing_id)
     temp_dir = target_dir + ".tmp"
 
@@ -85,7 +126,6 @@ def sync_listing_images(listing_id: int, existing_urls, new_files):
 
     # Сначала существующие (в нужном порядке)
     for url in existing_urls:
-        # URL вида /data/listings/{id}/01.jpg
         old_name = os.path.basename(url)
         old_path = os.path.join(target_dir, old_name)
         ext = _get_extension(old_name) or "jpg"
@@ -113,51 +153,47 @@ def sync_listing_images(listing_id: int, existing_urls, new_files):
         shutil.rmtree(target_dir)
     os.rename(temp_dir, target_dir)
 
-    # Обновляем БД
-    db = get_db()
-    db.execute("DELETE FROM listing_images WHERE listing_id = ?", (listing_id,))
-    for path in saved_paths:
-        db.execute(
-            "INSERT INTO listing_images (listing_id, image_url) VALUES (?, ?)",
-            (listing_id, path),
-        )
-    db.commit()
-    db.close()
+    # Генерируем thumbnails
+    _sync_thumbnails(target_dir)
 
     return saved_paths
 
 
 def delete_listing_images(listing_id: int):
-    """Удаляет папку с фотками объявления и записи в БД."""
-    from ..db import get_db
-
+    """Удаляет папку с фотками объявления."""
     target_dir = _listing_dir(listing_id)
     if os.path.exists(target_dir):
         shutil.rmtree(target_dir)
 
-    db = get_db()
-    db.execute("DELETE FROM listing_images WHERE listing_id = ?", (listing_id,))
-    db.commit()
-    db.close()
 
+def get_listing_image_urls(listing_id: int, thumb: bool = False):
+    """Возвращает отсортированные URL фото объявления из папки.
 
-def get_listing_image_urls(listing_id: int):
-    """Возвращает отсортированные URL фото объявления из папки."""
+    thumb=False — оригиналы (без thumb_ prefix).
+    thumb=True  — thumbnails (с thumb_ prefix).
+    """
     target_dir = _listing_dir(listing_id)
     if not os.path.exists(target_dir):
         return []
 
+    prefix = "thumb_" if thumb else ""
     files = []
     for name in os.listdir(target_dir):
         if name.startswith("."):
             continue
+        if thumb:
+            if not name.startswith("thumb_"):
+                continue
+        else:
+            if name.startswith("thumb_"):
+                continue
         files.append(name)
 
     files.sort()
     return [f"/data/listings/{listing_id}/{name}" for name in files]
 
 
-def get_preview_image(listing_id: int):
-    """Возвращает URL первой картинки или None."""
-    urls = get_listing_image_urls(listing_id)
-    return urls[0] if urls else None
+def get_preview_image(listing_id: int, thumb: bool = False):
+    """Возвращает URL первой картинки или empty.png."""
+    urls = get_listing_image_urls(listing_id, thumb=thumb)
+    return urls[0] if urls else EMPTY_IMAGE

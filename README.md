@@ -38,10 +38,22 @@ Users receive a clean list of options instead of random links.
 - manual listing input
 - risk scoring (LOW / MEDIUM / HIGH)
 - short notes per listing
-- public listings page
-- listing detail pages
-- admin panel
-- archive system
+- public listings page with search & filters
+- listing detail pages with image gallery & lightbox
+- admin panel with AJAX pagination
+- archive & draft system
+- image upload (drag & drop, reorder, delete)
+- simple analytics (site visits & listing views)
+
+---
+
+## Tech Stack
+
+- **Backend:** Python 3 + Flask
+- **Frontend:** Server-rendered Jinja2 templates, vanilla JS
+- **Database:** SQLite
+- **Styling:** plain CSS (no frameworks)
+- **Server:** gunicorn (production)
 
 ---
 
@@ -49,21 +61,108 @@ Users receive a clean list of options instead of random links.
 
 ```
 auto-hub/
-|   docs/
-|   web/
-|   |   static/
-|   |   templates/
-|   |   app.py
+├── docs/                       # Business docs (MVP flow, scripts, validation)
+│   ├── deal_validation.md
+│   ├── mvp_flow.md
+│   ├── notes.md
+│   └── scripts.md
+└── web/                        # Flask application
+    ├── app/
+    │   ├── __init__.py         # App factory, blueprints registration
+    │   ├── config.py           # Centralized config from env vars
+    │   ├── context.py          # Template context processors
+    │   ├── db.py               # SQLite init & connection helper
+    │   ├── decorators.py       # @admin_required
+    │   ├── constants.py        # App constants (risk levels, etc.)
+    │   ├── routes/
+    │   │   ├── public.py       # Public pages (home, listing detail)
+    │   │   ├── pages.py        # Static pages (terms, privacy, 404)
+    │   │   └── admin.py        # Admin routes (CRUD, login, logout)
+    │   ├── services/
+    │   │   ├── listings.py     # Public listing logic & filters
+    │   │   └── admin.py        # Admin logic (CRUD, stats, validation)
+    │   └── utils/
+    │       ├── images.py       # Image upload, sync, delete, preview
+    │       ├── location.py     # Location normalization & aliases
+    │       ├── stats.py        # Visit / view counters (UPSERT)
+    │       └── vin.py          # VIN masking utility
+    ├── data/
+    │   ├── db/
+    │   │   └── db.sqlite       # SQLite database
+    │   └── listings/{id}/      # Listing image folders
+    ├── static/
+    │   ├── css/
+    │   │   ├── base.css        # Design system (vars, buttons, forms)
+    │   │   ├── site.css        # Public site layout
+    │   │   └── admin.css       # Admin panel styles
+    │   ├── js/
+    │   │   ├── filters.js      # Advanced filters panel toggle
+    │   │   ├── gallery.js      # Listing gallery & lightbox
+    │   │   ├── admin_dashboard.js  # AJAX pagination
+    │   │   └── admin_images.js     # Drag & drop image uploader
+    │   └── images/
+    ├── templates/
+    │   ├── public/             # Public templates
+    │   └── admin/              # Admin templates
+    ├── .env                    # Environment variables
+    ├── requirements.txt
+    └── run.py                  # Dev entry point
 ```
 
 ---
 
-## Tech Stack
+## Development
 
-- Backend: Python (Flask-style)
-- Frontend: Server-rendered HTML templates
-- Database: SQLite
-- Styling: simple CSS
+### Setup
+
+```bash
+cd web
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+### Run (development)
+
+```bash
+python run.py
+```
+
+### Run (production)
+
+```bash
+gunicorn -w 2 -b 0.0.0.0:8000 run:app
+```
+
+---
+
+## Environment Variables
+
+Create `web/.env`:
+
+```env
+SECRET_KEY=your_secret_key
+ADMIN_PASSWORD=your_admin_password
+ADMIN_PATH=custom_admin_url_path
+```
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `SECRET_KEY` | `fallback_secret` | Flask session encryption |
+| `ADMIN_PASSWORD` | `fallback_password` | Admin panel password |
+| `ADMIN_PATH` | `admin` | Hidden URL prefix for admin panel |
+
+---
+
+## Database Schema
+
+### `inventory`
+Main table for listings. Includes `account_id` for future multi-account support.
+
+### `stats`
+Counters table. No time-series, just aggregated counts.
+- `('site', 0)` — total site visits
+- `('listing', N)` — views for listing N
 
 ---
 

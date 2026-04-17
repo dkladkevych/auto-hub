@@ -1,6 +1,16 @@
+"""
+Публичные маршруты (не требуют авторизации).
+
+- Главная страница с фильтрами, поиском и пагинацией
+- Детальная страница объявления с галереей
+- Страница сохранённых объявлений (Saved)
+
+Связан с сервисами: listings (получение данных), stats (логирование просмотров).
+"""
+
 from flask import Blueprint, render_template, request
 
-from ..services.listings import get_home_listings, get_listing_page_data
+from ..services.listings import get_home_listings, get_listing_page_data, get_saved_listings
 from ..utils.stats import log_listing_view, log_site_visit
 
 public_bp = Blueprint("public", __name__)
@@ -9,13 +19,16 @@ public_bp = Blueprint("public", __name__)
 @public_bp.route("/")
 def home():
     log_site_visit()
-    listings, has_any_filter = get_home_listings(request.args)
+    page = request.args.get("page", 1, type=int)
+    listings, has_any_filter, page, total_pages = get_home_listings(request.args, page=page)
 
     return render_template(
         "public/home.html",
         listings=listings,
         filters=request.args,
         has_any_filter=has_any_filter,
+        page=page,
+        total_pages=total_pages,
     )
 
 
@@ -29,3 +42,18 @@ def listing(id):
         car=car,
         images=images,
     )
+
+
+@public_bp.route("/saved")
+def saved():
+    ids_param = request.args.get("ids", "").strip()
+    id_list = []
+    if ids_param:
+        for part in ids_param.split(","):
+            try:
+                id_list.append(int(part.strip()))
+            except ValueError:
+                continue
+
+    listings = get_saved_listings(id_list)
+    return render_template("public/saved.html", listings=listings)

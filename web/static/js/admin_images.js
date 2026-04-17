@@ -5,6 +5,11 @@
     const fileInput = document.getElementById(opts.fileInputId);
     const form = document.querySelector(opts.formSelector);
     const adminPath = opts.adminPath;
+    const errorEl = document.getElementById("imageError");
+
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+    const MAX_IMAGES = 10;
+    const ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp"];
 
     let images = (opts.initial || []).map(function (url) {
       return { type: "existing", url: url };
@@ -18,6 +23,40 @@
         activeSaveMode = btn.value;
       });
     });
+
+    function showError(msg) {
+      if (!errorEl) return;
+      errorEl.textContent = msg;
+      errorEl.style.display = "block";
+    }
+
+    function clearError() {
+      if (!errorEl) return;
+      errorEl.textContent = "";
+      errorEl.style.display = "none";
+    }
+
+    function getExtension(filename) {
+      if (!filename || filename.indexOf(".") === -1) return "";
+      return filename.split(".").pop().toLowerCase();
+    }
+
+    function validateFile(file) {
+      const ext = getExtension(file.name);
+      if (ALLOWED_EXTENSIONS.indexOf(ext) === -1) {
+        return "Only JPG, JPEG, PNG, WEBP images are allowed.";
+      }
+      if (!file.type || !file.type.startsWith("image/")) {
+        return "Only image files are allowed.";
+      }
+      if (file.size === 0) {
+        return "File is empty.";
+      }
+      if (file.size > MAX_FILE_SIZE) {
+        return "Each image must be 5MB or smaller.";
+      }
+      return null;
+    }
 
     function render() {
       container.innerHTML = "";
@@ -38,6 +77,7 @@
         removeBtn.title = "Remove";
         removeBtn.onclick = function () {
           images.splice(index, 1);
+          clearError();
           render();
         };
 
@@ -65,11 +105,33 @@
     }
 
     function addFiles(files) {
+      clearError();
+
+      const newFiles = [];
+      const errors = [];
       for (let i = 0; i < files.length; i++) {
         const f = files[i];
         if (!f.name) continue;
-        images.push({ type: "new", file: f });
+
+        const error = validateFile(f);
+        if (error) {
+          errors.push(f.name + ": " + error);
+        } else {
+          newFiles.push({ type: "new", file: f });
+        }
       }
+
+      if (errors.length > 0) {
+        showError(errors.join(" "));
+        return;
+      }
+
+      if (images.length + newFiles.length > MAX_IMAGES) {
+        showError("Max " + MAX_IMAGES + " images allowed.");
+        return;
+      }
+
+      images = images.concat(newFiles);
       render();
     }
 
@@ -120,6 +182,10 @@
         method: "POST",
         body: formData,
         redirect: "follow",
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
       });
 
       const isSuccessRedirect =
@@ -129,6 +195,15 @@
 
       if (isSuccessRedirect) {
         window.location.href = resp.url;
+        return;
+      }
+
+      const ct = resp.headers.get("content-type") || "";
+      if (ct.indexOf("application/json") !== -1) {
+        const data = await resp.json();
+        if (data.error) {
+          showError(data.error);
+        }
       } else {
         const html = await resp.text();
         document.open();

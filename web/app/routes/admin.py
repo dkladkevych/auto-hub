@@ -1,4 +1,13 @@
-from flask import Blueprint, current_app, redirect, render_template, request, session, url_for
+"""
+Маршруты админ-панели (требуют авторизации).
+
+CRUD операции с объявлениями: создание, редактирование, удаление,
+архивация, публикация. Управление изображениями (drag & drop).
+
+Связан с сервисами: admin (бизнес-логика), utils/images (работа с фото).
+"""
+
+from flask import Blueprint, current_app, jsonify, redirect, render_template, request, session, url_for
 
 from ..decorators import admin_required
 from ..services.admin import (
@@ -59,12 +68,18 @@ def admin_new():
         data = parse_listing_form(request.form)
         error = validate_listing_form(data)
 
+        wants_json = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
         if error:
+            if wants_json:
+                return jsonify({"error": error})
             return render_template("admin/new.html", error=error)
 
         uploaded_files = request.files.getlist("images")
         img_error = validate_images(uploaded_files)
         if img_error:
+            if wants_json:
+                return jsonify({"error": img_error})
             return render_template("admin/new.html", error=img_error)
 
         listing_id = create_listing(data)
@@ -74,6 +89,8 @@ def admin_new():
         except ValueError as e:
             delete_listing_by_id(listing_id)
             delete_listing_images(listing_id)
+            if wants_json:
+                return jsonify({"error": str(e)})
             return render_template("admin/new.html", error=str(e))
 
         return redirect(url_for("admin.admin_dashboard"))
@@ -98,7 +115,11 @@ def admin_edit(id):
         data = parse_listing_form(request.form)
         error = validate_listing_form(data)
 
+        wants_json = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
         if error:
+            if wants_json:
+                return jsonify({"error": error})
             return render_template(
                 "admin/edit.html",
                 car=car,
@@ -111,6 +132,8 @@ def admin_edit(id):
 
         img_error = validate_images(uploaded_files)
         if img_error:
+            if wants_json:
+                return jsonify({"error": img_error})
             return render_template(
                 "admin/edit.html",
                 car=car,
@@ -126,6 +149,8 @@ def admin_edit(id):
             try:
                 sync_listing_images(id, keep_images, uploaded_files)
             except ValueError as e:
+                if wants_json:
+                    return jsonify({"error": str(e)})
                 return render_template(
                     "admin/edit.html",
                     car=car,

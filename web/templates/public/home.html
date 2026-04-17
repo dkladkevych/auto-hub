@@ -19,17 +19,16 @@ Browse curated car listings with manual review. Safer choices, no scams.
     <div class="grid">
         {% for car in listings %}
         <article class="card">
-            {% if car.preview_image %}
-                <a class="card-media" href="/listing/{{ car.id }}">
-                    {% if car.status == "demo" %}<div class="demo-ribbon">Demo</div>{% endif %}
-                    <img src="{{ car.preview_image }}" alt="{{ car.title }}">
-                </a>
-            {% else %}
-                <div class="no-image">No image</div>
-            {% endif %}
+            <a class="card-media" href="/listing/{{ car.id }}">
+                {% if car.status == "demo" %}<div class="demo-ribbon">Demo</div>{% endif %}
+                <img src="{{ car.preview_image }}" alt="{{ car.title }}" loading="lazy">
+            </a>
 
             <div class="card-body">
-                <h3>{{ car.title }}</h3>
+                <div class="card-head-row">
+                    <h3>{{ car.title }}</h3>
+                    <button type="button" class="favorite-btn" data-favorite="{{ car.id }}" aria-label="Toggle favorite" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 6.00019C10.2006 3.90317 7.19377 3.2551 4.93923 5.17534C2.68468 7.09558 2.36727 10.3061 4.13778 12.5772C5.60984 14.4654 10.0648 18.4479 11.5249 19.7369C11.6882 19.8811 11.7699 19.9532 11.8652 19.9815C11.9483 20.0062 12.0393 20.0062 12.1225 19.9815C12.2178 19.9532 12.2994 19.8811 12.4628 19.7369C13.9229 18.4479 18.3778 14.4654 19.8499 12.5772C21.6204 10.3061 21.3417 7.07538 19.0484 5.17534C16.7551 3.2753 13.7994 3.90317 12 6.00019Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+                </div>
                 <p class="price">${{ car.price }}</p>
 
                 <div class="card-mini-specs">
@@ -50,6 +49,26 @@ Browse curated car listings with manual review. Safer choices, no scams.
         </article>
         {% endfor %}
     </div>
+
+    {% if total_pages > 1 %}
+    <nav class="pagination" aria-label="Page navigation">
+        {% if page > 1 %}
+            <a class="pagination-nav" href="{{ request.path }}?{{ request.args | dictsort | rejectattr('0', 'equalto', 'page') | map('join', '=') | join('&') }}&page={{ page - 1 }}">Previous</a>
+        {% endif %}
+
+        {% for p in range(1, total_pages + 1) %}
+            {% if p == page %}
+                <span class="page-pill active-page">{{ p }}</span>
+            {% else %}
+                <a class="page-pill pagination-btn" href="{{ request.path }}?{{ request.args | dictsort | rejectattr('0', 'equalto', 'page') | map('join', '=') | join('&') }}&page={{ p }}">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {% if page < total_pages %}
+            <a class="pagination-nav" href="{{ request.path }}?{{ request.args | dictsort | rejectattr('0', 'equalto', 'page') | map('join', '=') | join('&') }}&page={{ page + 1 }}">Next</a>
+        {% endif %}
+    </nav>
+    {% endif %}
 {% else %}
     {% if has_any_filter %}
     <div class="empty-state">

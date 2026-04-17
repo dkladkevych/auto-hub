@@ -1,3 +1,10 @@
+"""
+Централизованная конфигурация приложения.
+
+Читает переменные из .env (SECRET_KEY, ADMIN_PASSWORD, ADMIN_PATH)
+и определяет пути к папкам данных (БД, изображения).
+"""
+
 import os
 from dotenv import load_dotenv
 

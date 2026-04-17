@@ -1,3 +1,10 @@
+"""
+Декораторы доступа.
+
+@admin_required — проверяет авторизацию администратора через сессию.
+Используется на всех маршрутах админ-панели.
+"""
+
 from functools import wraps
 
 from flask import redirect, session, url_for
