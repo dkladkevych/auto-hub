@@ -58,6 +58,13 @@
                         <form method="POST" action="/{{ ADMIN_PATH }}/publish/{{ car.id }}" class="action-form">
                             <button type="submit" class="table-action-btn table-action-main">Publish</button>
                         </form>
+                        {% elif car.status == "demo" %}
+                        <form method="POST" action="/{{ ADMIN_PATH }}/publish/{{ car.id }}" class="action-form">
+                            <button type="submit" class="table-action-btn table-action-main">Publish</button>
+                        </form>
+                        <form method="POST" action="/{{ ADMIN_PATH }}/archive/{{ car.id }}" class="action-form">
+                            <button type="submit" class="table-action-btn table-action-main">Archive</button>
+                        </form>
                         {% endif %}
 
                         <form method="POST" action="/{{ ADMIN_PATH }}/delete/{{ car.id }}" class="action-form" onsubmit="return confirm('Delete this listing permanently?');">

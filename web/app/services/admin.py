@@ -54,6 +54,7 @@ def get_dashboard_data(page: int, per_page: int = 10):
     active_count = db.execute("SELECT COUNT(*) AS count FROM listings WHERE status = 'active'").fetchone()["count"]
     archived_count = db.execute("SELECT COUNT(*) AS count FROM listings WHERE status = 'archived'").fetchone()["count"]
     draft_count = db.execute("SELECT COUNT(*) AS count FROM listings WHERE status = 'draft'").fetchone()["count"]
+    demo_count = db.execute("SELECT COUNT(*) AS count FROM listings WHERE status = 'demo'").fetchone()["count"]
     total_site_visits = db.execute("SELECT COUNT(*) AS count FROM site_visits").fetchone()["count"]
     total_listing_views = db.execute("SELECT COUNT(*) AS count FROM listing_views").fetchone()["count"]
 
@@ -75,6 +76,7 @@ def get_dashboard_data(page: int, per_page: int = 10):
         "draft_count": draft_count,
         "active_count": active_count,
         "archived_count": archived_count,
+        "demo_count": demo_count,
         "total_site_visits": total_site_visits,
         "total_listing_views": total_listing_views,
         "listings": listings_with_stats,
@@ -117,6 +119,8 @@ def parse_listing_form(form):
         status = "active"
     elif save_mode == "archive":
         status = "archived"
+    elif save_mode == "demo":
+        status = "demo"
     else:
         status = "draft"
 

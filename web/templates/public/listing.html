@@ -23,6 +23,7 @@
     <section class="viewer-card">
         {% if images %}
             <button type="button" class="main-image-wrap" id="mainImageButton">
+                {% if car.status == "demo" %}<div class="demo-ribbon">Demo</div>{% endif %}
                 <img
                     id="mainViewerImage"
                     class="main-viewer-image"
@@ -55,6 +56,10 @@
         {% if car.status == "archived" %}
             <div class="archived-banner">
                 This listing is archived and may no longer be available.
+            </div>
+        {% elif car.status == "demo" %}
+            <div class="demo-banner">
+                Demo listing for preview purposes only.
             </div>
         {% endif %}
         <h1 class="listing-title">{{ car.title }}</h1>

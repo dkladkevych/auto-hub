@@ -92,6 +92,7 @@
     aspect-ratio: 4 / 3;
     background: var(--surface-2);
     overflow: hidden;
+    position: relative;
 }
 
 .card-media img {
@@ -190,7 +191,9 @@
     aspect-ratio: 4 / 3;
     background: var(--surface-2);
     border: none;
+    padding: 0;
     overflow: hidden;
+    position: relative;
 }
 
 .main-viewer-image {
@@ -932,4 +935,34 @@
     color: var(--medium);
     font-size: 14px;
     font-weight: 600;
+}
+
+.demo-banner {
+    margin-bottom: 16px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid rgba(183, 138, 82, 0.25);
+    background: rgba(183, 138, 82, 0.12);
+    color: var(--medium);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.demo-ribbon {
+    position: absolute;
+    top: 18px;
+    left: -40px;
+    width: 140px;
+    background: linear-gradient(135deg, #c9a66b 0%, #a08050 100%);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 6px 0;
+    text-align: center;
+    transform: rotate(-45deg);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    pointer-events: none;
+    z-index: 5;
 }

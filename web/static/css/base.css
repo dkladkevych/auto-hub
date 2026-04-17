@@ -184,6 +184,12 @@ main.container {
     border-color: rgba(120, 111, 102, 0.2);
 }
 
+.status-pill.demo {
+    background: rgba(183, 138, 82, 0.14);
+    color: var(--medium);
+    border-color: rgba(183, 138, 82, 0.2);
+}
+
 /* ========== Forms shared ========== */
 
 input,

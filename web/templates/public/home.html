@@ -21,6 +21,7 @@ Browse curated car listings with manual review. Safer choices, no scams.
         <article class="card">
             {% if car.preview_image %}
                 <a class="card-media" href="/listing/{{ car.id }}">
+                    {% if car.status == "demo" %}<div class="demo-ribbon">Demo</div>{% endif %}
                     <img src="{{ car.preview_image }}" alt="{{ car.title }}">
                 </a>
             {% else %}

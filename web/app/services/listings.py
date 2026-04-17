@@ -41,7 +41,7 @@ def get_home_listings(filters):
     query = """
         SELECT *
         FROM listings
-        WHERE status = 'active'
+        WHERE status IN ('active', 'demo')
     """
 
     params = []
