@@ -1,8 +1,8 @@
 """
-Декораторы доступа.
+Access decorators.
 
-@admin_required — проверяет авторизацию администратора через сессию.
-Используется на всех маршрутах админ-панели.
+@admin_required — checks admin authorization via session.
+Used on all admin panel routes.
 """
 
 from functools import wraps
@@ -11,7 +11,7 @@ from flask import redirect, session, url_for
 
 
 def admin_required(view_func):
-    """Пускает внутрь только авторизованного админа."""
+    """Allows only an authenticated admin inside."""
     @wraps(view_func)
     def wrapper(*args, **kwargs):
         if not session.get("is_admin"):

@@ -1,11 +1,11 @@
 """
-Публичные маршруты (не требуют авторизации).
+Public routes (no authentication required).
 
-- Главная страница с фильтрами, поиском и пагинацией
-- Детальная страница объявления с галереей
-- Страница сохранённых объявлений (Saved)
+- Home page with filters, search, and pagination
+- Listing detail page with gallery
+- Saved listings page
 
-Связан с сервисами: listings (получение данных), stats (логирование просмотров).
+Connected to services: listings (data), stats (view logging).
 """
 
 from flask import Blueprint, render_template, request
@@ -35,12 +35,13 @@ def home():
 @public_bp.route("/listing/<int:id>")
 def listing(id):
     log_listing_view(id)
-    car, images = get_listing_page_data(id)
+    car, images, thumbs = get_listing_page_data(id)
 
     return render_template(
         "public/listing.html",
         car=car,
         images=images,
+        thumbs=thumbs,
     )
 
 

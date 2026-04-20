@@ -1,29 +1,36 @@
 import os
 import sqlite3
 
+from flask import current_app
+
 from .config import Config
 
 
 def get_db():
-    """Открывает новое соединение с SQLite.
+    """Open a new SQLite connection per request.
 
-    Сейчас приложение маленькое, поэтому простого connect на запрос достаточно.
+    The app is small, so a simple connect per request is sufficient.
     """
-    conn = sqlite3.connect(Config.DB_PATH)
+    conn = sqlite3.connect(current_app.config["DB_PATH"])
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
 
-def init_db():
-    """Создает таблицы, если база пустая.
+def init_db(db_path=None):
+    """Create tables if the database is empty.
 
-    Важно: это должно вызываться и при локальном запуске, и при gunicorn.
+    Must be called both for local development and gunicorn.
     """
-    os.makedirs(Config.DB_DIR, exist_ok=True)
+    if db_path is None:
+        db_path = Config.DB_PATH
+    if db_path != ":memory:":
+        db_dir = os.path.dirname(db_path)
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
     os.makedirs(Config.LISTINGS_DIR, exist_ok=True)
 
-    conn = sqlite3.connect(Config.DB_PATH)
+    conn = sqlite3.connect(db_path)
     conn.execute("PRAGMA foreign_keys = ON")
 
     conn.execute("""
@@ -34,7 +41,6 @@ def init_db():
             title TEXT NOT NULL,
             price INTEGER NOT NULL,
             description TEXT NOT NULL,
-            risk_level TEXT NOT NULL,
             source_url TEXT,
             status TEXT NOT NULL DEFAULT 'active',
 
@@ -45,9 +51,9 @@ def init_db():
             location TEXT,
             condition TEXT,
             notes TEXT,
-            seller_status TEXT,
-
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            transmission TEXT,
+            drivetrain TEXT,
+            published_at DATETIME
         )
     """)
 
@@ -59,6 +65,19 @@ def init_db():
             PRIMARY KEY (target_type, target_id)
         )
     """)
+
+    # Migration: add transmission and drivetrain if missing
+    for col in ("transmission", "drivetrain"):
+        try:
+            conn.execute(f"ALTER TABLE inventory ADD COLUMN {col} TEXT")
+        except sqlite3.OperationalError:
+            pass
+
+    # Migration: add published_at if missing
+    try:
+        conn.execute("ALTER TABLE inventory ADD COLUMN published_at DATETIME")
+    except sqlite3.OperationalError:
+        pass
 
     conn.commit()
     conn.close()

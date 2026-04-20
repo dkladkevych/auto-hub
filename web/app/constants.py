@@ -1,9 +1,10 @@
 """
-Константы приложения.
+Application constants.
 
-Используются в формах, валидации и отображении.
+Used in forms, validation, and display.
 """
 
-RISK_LEVELS = ["LOW", "MEDIUM", "HIGH"]
 CONDITION_OPTIONS = ["Good", "Fair", "Poor"]
-SELLER_STATUS_OPTIONS = ["Unknown", "Responsive", "Suspicious"]
+
+DRIVETRAIN_OPTIONS = ["FWD", "RWD", "AWD", "4WD", "Unknown"]
+TRANSMISSION_OPTIONS = ["Automatic", "Manual", "CVT", "Unknown"]

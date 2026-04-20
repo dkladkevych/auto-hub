@@ -12,6 +12,7 @@
         {% endif %}
 
         <form method="POST" class="form-card">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="password" name="password" placeholder="Password" required>
             <button type="submit">Login</button>
         </form>

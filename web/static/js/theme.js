@@ -1,11 +1,11 @@
 /**
  * theme.js
  *
- * Переключение между светлой и тёмной темой.
- * Сохраняет выбор в localStorage и применяет перед отрисовкой страницы.
+ * Toggle between light and dark theme.
+ * Saves the choice in localStorage and applies it before the page renders.
  *
- * Связан с base.html (атрибут data-theme на <html>).
- * Иконки sun/moon переключаются через CSS, JS только меняет data-theme.
+ * Connected to base.html (data-theme attribute on <html>).
+ * Sun/moon icons are toggled via CSS; JS only changes data-theme.
  */
 (function () {
     const STORAGE_KEY = "theme";
@@ -25,7 +25,7 @@
         setTheme(current === "dark" ? "light" : "dark");
     }
 
-    // Применяем сохранённую тему мгновенно (до первой отрисовки)
+    // Apply the saved theme instantly (before first paint)
     setTheme(getSavedTheme());
 
     window.toggleTheme = toggleTheme;

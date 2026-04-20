@@ -1,13 +1,13 @@
 /**
  * filters.js
  *
- * Управляет панелью расширенных фильтров на главной странице.
- * Связан с шаблоном public/base.html (элемент #advancedFilters).
+ * Controls the advanced filters panel on the home page.
+ * Connected to public/base.html (the #advancedFilters element).
  *
- * Функции:
- * - toggleAdvancedFilters — открывает/закрывает панель фильтров по клику на ⚙.
- * - При загрузке страницы автоматически открывает панель, если в URL
- *   присутствуют параметры фильтрации.
+ * Functions:
+ * - toggleAdvancedFilters — opens/closes the filter panel on ⚙ click.
+ * - On page load, automatically opens the panel if the URL contains
+ *   any filter parameters.
  */
 
 function toggleAdvancedFilters() {

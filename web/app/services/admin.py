@@ -1,24 +1,23 @@
 """
-Бизнес-логика админ-панели.
+Admin panel business logic.
 
-- CRUD операции с таблицей inventory
-- Валидация форм создания/редактирования объявлений
-- Статистика дашборда (JOIN с таблицей stats)
-- Парсинг форм и нормализация данных
+- CRUD operations on the inventory table
+- Form validation for creating/editing listings
+- Dashboard statistics (JOIN with stats table)
+- Form parsing and data normalization
 
-Связан с: db (inventory + stats), utils/images (превью), utils/location (нормализация).
+Connected to: db (inventory + stats), utils/images (previews), utils/location (normalization).
 """
 
 from flask import abort
 
 from ..db import get_db
 from ..utils.images import get_preview_image, get_listing_image_urls
-from ..utils.location import build_location_search
 
 from ..constants import (
-    RISK_LEVELS,
     CONDITION_OPTIONS,
-    SELLER_STATUS_OPTIONS,
+    DRIVETRAIN_OPTIONS,
+    TRANSMISSION_OPTIONS,
 )
 
 
@@ -42,7 +41,7 @@ def _build_title(year, make, model):
 
 
 def get_dashboard_data(page: int, per_page: int = 10):
-    """Статы и пагинация админки."""
+    """Dashboard stats and pagination."""
     offset = (page - 1) * per_page
     db = get_db()
 
@@ -68,14 +67,14 @@ def get_dashboard_data(page: int, per_page: int = 10):
         SELECT i.*, COALESCE(s.view_count, 0) AS view_count
         FROM inventory i
         LEFT JOIN stats s ON s.target_type = 'listing' AND s.target_id = i.id
-        ORDER BY i.created_at DESC
+        ORDER BY i.id DESC
         LIMIT ? OFFSET ?
     """, (per_page, offset)).fetchall()
 
     listings = []
     for row in rows:
         d = dict(row)
-        d["preview_image"] = get_preview_image(d["id"])
+        d["preview_image"] = get_preview_image(d["id"], thumb=True)
         listings.append(d)
 
     db.close()
@@ -95,7 +94,7 @@ def get_dashboard_data(page: int, per_page: int = 10):
 
 
 def get_dashboard_listings_block(page: int, per_page: int = 10):
-    """Только блок таблицы для AJAX-пагинации."""
+    """Table block only, for AJAX pagination."""
     offset = (page - 1) * per_page
     db = get_db()
 
@@ -106,14 +105,14 @@ def get_dashboard_listings_block(page: int, per_page: int = 10):
         SELECT i.*, COALESCE(s.view_count, 0) AS view_count
         FROM inventory i
         LEFT JOIN stats s ON s.target_type = 'listing' AND s.target_id = i.id
-        ORDER BY i.created_at DESC
+        ORDER BY i.id DESC
         LIMIT ? OFFSET ?
     """, (per_page, offset)).fetchall()
 
     listings = []
     for row in rows:
         d = dict(row)
-        d["preview_image"] = get_preview_image(d["id"])
+        d["preview_image"] = get_preview_image(d["id"], thumb=True)
         listings.append(d)
 
     db.close()
@@ -126,7 +125,7 @@ def get_dashboard_listings_block(page: int, per_page: int = 10):
 
 
 def parse_listing_form(form):
-    """Собирает form data в один словарь."""
+    """Collects form data into a single dict."""
     save_mode = form.get("save_mode", "draft").strip()
 
     if save_mode == "publish":
@@ -146,7 +145,6 @@ def parse_listing_form(form):
         "title": _build_title(year, make, model),
         "price": form.get("price", "").strip(),
         "description": form.get("description", "").strip(),
-        "risk_level": form.get("risk_level", "").strip(),
         "source_url": form.get("source_url", "").strip(),
 
         "year": year,
@@ -157,49 +155,83 @@ def parse_listing_form(form):
 
         "condition": form.get("condition", "").strip(),
         "notes": form.get("notes", "").strip(),
-        "seller_status": form.get("seller_status", "").strip(),
+        "transmission": form.get("transmission", "").strip(),
+        "drivetrain": form.get("drivetrain", "").strip(),
     }
 
     data["status"] = status
-    data["risk_level"] = normalize_choice(data["risk_level"], RISK_LEVELS)
     data["condition"] = normalize_choice(data["condition"], CONDITION_OPTIONS)
-    data["seller_status"] = normalize_choice(data["seller_status"], SELLER_STATUS_OPTIONS)
+    data["transmission"] = normalize_choice(data["transmission"], TRANSMISSION_OPTIONS)
+    data["drivetrain"] = normalize_choice(data["drivetrain"], DRIVETRAIN_OPTIONS)
 
     return data
 
 
 def validate_listing_form(data):
-    """Валидация обязательных полей и форматов."""
-    if not data["title"] or not data["price"] or not data["description"] or not data["risk_level"]:
-        return "Please fill in all required fields."
+    """Validates required fields and formats. Returns dict of field errors or None."""
+    errors = {}
+    is_draft = data.get("status") == "draft"
 
-    try:
-        data["price"] = int(data["price"])
-    except ValueError:
-        return "Price must be a number."
+    if not data.get("title"):
+        errors["year"] = "At least one of Year, Make, or Model is required"
 
-    if data["risk_level"] not in RISK_LEVELS:
-        return "Risk level must be LOW, MEDIUM, or HIGH."
+    if is_draft:
+        # Default empty price to 0 for DB compatibility
+        if not data.get("price"):
+            data["price"] = 0
+        else:
+            try:
+                data["price"] = int(data["price"])
+            except ValueError:
+                data["price"] = 0
+        return errors if errors else None
 
-    return None
+    # Publish / demo / archive — full validation
+    if not data.get("price"):
+        errors["price"] = "Price is required"
+    else:
+        try:
+            data["price"] = int(data["price"])
+        except ValueError:
+            errors["price"] = "Price must be a number"
+
+    if not data.get("mileage_km"):
+        errors["mileage_km"] = "Mileage is required"
+    if not data.get("transmission"):
+        errors["transmission"] = "Transmission is required"
+    if not data.get("drivetrain"):
+        errors["drivetrain"] = "Drivetrain is required"
+    if not data.get("location"):
+        errors["location"] = "Location is required"
+    if not data.get("source_url"):
+        errors["source_url"] = "Source URL is required"
+    if not data.get("description"):
+        errors["description"] = "Description is required"
+    if not data.get("condition"):
+        errors["condition"] = "Condition is required"
+
+    return errors if errors else None
 
 
 def create_listing(data):
-    """Создает новое объявление. Возвращает listing_id."""
+    """Creates a new listing. Returns listing_id."""
     db = get_db()
 
     cursor = db.execute("""
         INSERT INTO inventory (
-            account_id, title, price, description, risk_level, source_url, status,
+            account_id, title, price, description, source_url, status,
             year, make, model, mileage_km, location,
-            condition, notes, seller_status
+            condition, notes, transmission, drivetrain, published_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,
+            CASE WHEN ? IN ('active', 'demo') THEN CURRENT_TIMESTAMP END
+        )
     """, (
         0,
-        data["title"], data["price"], data["description"], data["risk_level"], data["source_url"], data["status"],
+        data["title"], data["price"], data["description"], data["source_url"], data["status"],
         data["year"], data["make"], data["model"], data["mileage_km"], data["location"],
-        data["condition"], data["notes"], data["seller_status"],
+        data["condition"], data["notes"], data["transmission"], data["drivetrain"], data["status"],
     ))
 
     listing_id = cursor.lastrowid
@@ -209,7 +241,7 @@ def create_listing(data):
 
 
 def get_listing_for_edit(listing_id: int):
-    """Получает объявление и его изображения для edit-формы."""
+    """Gets a listing and its media for the edit form."""
     db = get_db()
 
     car = db.execute("""
@@ -228,7 +260,7 @@ def get_listing_for_edit(listing_id: int):
 
 
 def update_listing(listing_id: int, data):
-    """Обновляет объявление (без изображений)."""
+    """Updates a listing (without media)."""
     db = get_db()
 
     db.execute("""
@@ -237,7 +269,6 @@ def update_listing(listing_id: int, data):
             title = ?,
             price = ?,
             description = ?,
-            risk_level = ?,
             source_url = ?,
             status = ?,
             year = ?,
@@ -247,12 +278,14 @@ def update_listing(listing_id: int, data):
             location = ?,
             condition = ?,
             notes = ?,
-            seller_status = ?
+            transmission = ?,
+            drivetrain = ?,
+            published_at = COALESCE(published_at, CASE WHEN ? IN ('active', 'demo') THEN CURRENT_TIMESTAMP END)
         WHERE id = ?
     """, (
-        data["title"], data["price"], data["description"], data["risk_level"], data["source_url"], data["status"],
+        data["title"], data["price"], data["description"], data["source_url"], data["status"],
         data["year"], data["make"], data["model"], data["mileage_km"], data["location"],
-        data["condition"], data["notes"], data["seller_status"],
+        data["condition"], data["notes"], data["transmission"], data["drivetrain"], data["status"],
         listing_id,
     ))
 
@@ -274,5 +307,14 @@ def set_listing_status(listing_id: int, status: str):
         SET status = ?
         WHERE id = ?
     """, (status, listing_id))
+
+    # Set published_at on first publish (active or demo)
+    if status in ("active", "demo"):
+        db.execute("""
+            UPDATE inventory
+            SET published_at = COALESCE(published_at, CURRENT_TIMESTAMP)
+            WHERE id = ?
+        """, (listing_id,))
+
     db.commit()
     db.close()

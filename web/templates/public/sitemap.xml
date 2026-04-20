@@ -18,7 +18,7 @@
     {% for car in listings %}
     <url>
         <loc>{{ host }}/listing/{{ car.id }}</loc>
-        <lastmod>{{ car.created_at[:10] }}</lastmod>
+        <lastmod>{{ car.published_at[:10] }}</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>

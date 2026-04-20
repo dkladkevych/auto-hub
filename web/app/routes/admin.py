@@ -1,15 +1,17 @@
 """
-Маршруты админ-панели (требуют авторизации).
+Admin panel routes (require authentication).
 
-CRUD операции с объявлениями: создание, редактирование, удаление,
-архивация, публикация. Управление изображениями (drag & drop).
+CRUD operations for listings: create, edit, delete,
+archive, publish. Media management (drag & drop).
 
-Связан с сервисами: admin (бизнес-логика), utils/images (работа с фото).
+Connected to services: admin (business logic), utils/images (media handling).
 """
 
 from flask import Blueprint, current_app, jsonify, redirect, render_template, request, session, url_for
+from werkzeug.security import check_password_hash
 
 from ..decorators import admin_required
+from ..extensions import limiter
 from ..services.admin import (
     create_listing,
     delete_listing_by_id,
@@ -31,13 +33,23 @@ admin_bp = Blueprint("admin", __name__)
 
 
 @admin_bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("5 per minute")
 def admin_login():
     error = None
 
     if request.method == "POST":
         password = request.form.get("password", "").strip()
 
-        if password == current_app.config["ADMIN_PASSWORD"]:
+        stored_hash = current_app.config.get("ADMIN_PASSWORD_HASH", "")
+        stored_plain = current_app.config.get("ADMIN_PASSWORD", "")
+
+        valid = False
+        if stored_hash:
+            valid = check_password_hash(stored_hash, password)
+        elif stored_plain:
+            valid = password == stored_plain
+
+        if valid:
             session["is_admin"] = True
             return redirect(url_for("admin.admin_dashboard"))
 
@@ -66,21 +78,22 @@ def admin_dashboard():
 def admin_new():
     if request.method == "POST":
         data = parse_listing_form(request.form)
-        error = validate_listing_form(data)
+        errors = validate_listing_form(data)
+        form_data = dict(request.form)
 
         wants_json = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
-        if error:
+        if errors:
             if wants_json:
-                return jsonify({"error": error})
-            return render_template("admin/new.html", error=error)
+                return jsonify({"errors": errors})
+            return render_template("admin/new.html", errors=errors, form_data=form_data)
 
         uploaded_files = request.files.getlist("images")
         img_error = validate_images(uploaded_files)
         if img_error:
             if wants_json:
                 return jsonify({"error": img_error})
-            return render_template("admin/new.html", error=img_error)
+            return render_template("admin/new.html", error=img_error, form_data=form_data)
 
         listing_id = create_listing(data)
 
@@ -91,11 +104,11 @@ def admin_new():
             delete_listing_images(listing_id)
             if wants_json:
                 return jsonify({"error": str(e)})
-            return render_template("admin/new.html", error=str(e))
+            return render_template("admin/new.html", error=str(e), form_data=form_data)
 
         return redirect(url_for("admin.admin_dashboard"))
 
-    return render_template("admin/new.html", error=None)
+    return render_template("admin/new.html", error=None, form_data={})
 
 
 @admin_bp.route("/delete/<int:id>", methods=["POST"])
@@ -113,18 +126,20 @@ def admin_edit(id):
 
     if request.method == "POST":
         data = parse_listing_form(request.form)
-        error = validate_listing_form(data)
+        errors = validate_listing_form(data)
+        form_data = dict(request.form)
 
         wants_json = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
-        if error:
+        if errors:
             if wants_json:
-                return jsonify({"error": error})
+                return jsonify({"errors": errors})
             return render_template(
                 "admin/edit.html",
                 car=car,
                 existing_images=existing_images,
-                error=error,
+                errors=errors,
+                form_data=form_data,
             )
 
         uploaded_files = request.files.getlist("images")
@@ -139,6 +154,7 @@ def admin_edit(id):
                 car=car,
                 existing_images=existing_images,
                 error=img_error,
+                form_data=form_data,
             )
 
         update_listing(id, data)
@@ -156,6 +172,7 @@ def admin_edit(id):
                     car=car,
                     existing_images=existing_images,
                     error=str(e),
+                    form_data=form_data,
                 )
         else:
             delete_listing_images(id)
@@ -167,6 +184,7 @@ def admin_edit(id):
         car=car,
         existing_images=existing_images,
         error=None,
+        form_data={},
     )
 
 

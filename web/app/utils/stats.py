@@ -1,17 +1,17 @@
 """
-Логирование просмотров через UPSERT в таблицу stats.
+View logging via UPSERT into the stats table.
 
-- site visits: счётчик посещений главной страницы
-- listing views: счётчик просмотров конкретного объявления
+- site visits: counter for home page visits
+- listing views: counter for individual listing views
 
-Использует SQLite ON CONFLICT для атомарного обновления счётчиков.
+Uses SQLite ON CONFLICT for atomic counter updates.
 """
 
 from ..db import get_db
 
 
 def log_site_visit():
-    """Увеличивает счётчик посещений сайта."""
+    """Increments the site visit counter."""
     db = get_db()
     db.execute(
         """
@@ -26,7 +26,7 @@ def log_site_visit():
 
 
 def log_listing_view(listing_id: int):
-    """Увеличивает счётчик просмотров конкретного объявления."""
+    """Increments the view counter for a specific listing."""
     db = get_db()
     db.execute(
         """

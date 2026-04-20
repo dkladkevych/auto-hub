@@ -1,13 +1,13 @@
 /**
  * admin_dashboard.js
  *
- * AJAX-пагинация таблицы объявлений в админ-панели.
- * Связан с шаблоном admin/dashboard.html.
+ * AJAX pagination for the admin listings table.
+ * Connected to admin/dashboard.html.
  *
- * Функция loadAdminPage подгружает HTML-фрагмент с сервера
- * и вставляет его в #adminListingsBlock, обновляя URL без перезагрузки.
+ * The loadAdminPage function fetches an HTML fragment from the server
+ * and injects it into #adminListingsBlock, updating the URL without a reload.
  *
- * Зависит от глобальной переменной window.ADMIN_PATH (передаётся из шаблона).
+ * Depends on the global window.ADMIN_PATH variable (passed from the template).
  */
 async function loadAdminPage(page) {
     const block = document.getElementById("adminListingsBlock");

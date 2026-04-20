@@ -1,13 +1,13 @@
 """
-Context processor — делает ADMIN_PATH доступным во всех Jinja-шаблонах.
+Context processor — makes ADMIN_PATH available in all Jinja templates.
 
-Используется для динамической генерации URL админ-панели
-(скрытый путь задаётся через переменную окружения).
+Used for dynamic admin panel URL generation
+(the hidden path is set via an environment variable).
 """
 
 from .config import Config
 
 
 def inject_admin_path():
-    """Делает ADMIN_PATH доступным во всех шаблонах."""
+    """Makes ADMIN_PATH available in all templates."""
     return {"ADMIN_PATH": Config.ADMIN_PATH}

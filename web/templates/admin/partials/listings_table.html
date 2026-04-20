@@ -10,7 +10,6 @@
                 <th>Title</th>
                 <th>Price</th>
                 <th>Views</th>
-                <th>Risk</th>
                 <th>Status</th>
                 <th>Action</th>
             </tr>
@@ -29,10 +28,6 @@
 
                 <td class="col-views">{{ car.view_count }}</td>
 
-                <td class="col-risk">
-                    <span class="risk-pill {{ car.risk_level|lower }}">{{ car.risk_level }}</span>
-                </td>
-
                 <td class="col-status">
                     <span class="status-pill {{ car.status }}">{{ car.status }}</span>
                 </td>
@@ -44,18 +39,22 @@
 
                         {% if car.status == "active" %}
                         <form method="POST" action="/{{ ADMIN_PATH }}/archive/{{ car.id }}" class="action-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="table-action-btn table-action-main">Archive</button>
                         </form>
                         {% elif car.status == "archived" %}
                         <form method="POST" action="/{{ ADMIN_PATH }}/unarchive/{{ car.id }}" class="action-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="table-action-btn table-action-main">Unarchive</button>
                         </form>
                         {% elif car.status == "draft" %}
                         <form method="POST" action="/{{ ADMIN_PATH }}/publish/{{ car.id }}" class="action-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="table-action-btn table-action-main">Publish</button>
                         </form>
                         {% elif car.status == "demo" %}
                         <form method="POST" action="/{{ ADMIN_PATH }}/publish/{{ car.id }}" class="action-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="table-action-btn table-action-main">Publish</button>
                         </form>
                         <form method="POST" action="/{{ ADMIN_PATH }}/archive/{{ car.id }}" class="action-form">
@@ -64,6 +63,7 @@
                         {% endif %}
 
                         <form method="POST" action="/{{ ADMIN_PATH }}/delete/{{ car.id }}" class="action-form" onsubmit="return confirm('Delete this listing permanently?');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                             <button type="submit" class="table-action-btn table-action-danger">Delete</button>
                         </form>
                     </div>

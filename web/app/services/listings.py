@@ -1,17 +1,19 @@
 """
-Бизнес-логика публичного каталога объявлений.
+Public listing catalog business logic.
 
-- Фильтрация и поиск по цене, году, пробегу, риску, локации
-- Формирование списка для главной страницы с пагинацией
-- Данные для детальной страницы (с галереей)
+- Filtering and search by price, year, mileage, risk, location
+- Building the home page list with pagination
+- Detail page data (with gallery)
 
-Связан с: db (inventory), utils/images (превью + thumbnails), utils/location (нормализация локаций).
+Connected to: db (inventory), utils/images (previews + thumbnails), utils/location (location normalization).
 """
 
 from flask import abort
 
 from ..db import get_db
-from ..utils.images import get_listing_image_urls, get_preview_image
+from datetime import datetime, timezone
+
+from ..utils.images import get_listing_image_urls, get_listing_media_urls, get_preview_image, listing_has_video
 from ..utils.location import build_location_search
 
 
@@ -22,8 +24,38 @@ def _to_int(value):
         return None
 
 
+def _time_since(dt_str):
+    """Human-readable time since published (e.g. '5 Hours', '2 Days'). Uses UTC."""
+    if not dt_str:
+        return ""
+    try:
+        dt = datetime.fromisoformat(str(dt_str).replace("Z", "+00:00"))
+    except (ValueError, AttributeError):
+        return ""
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    now = datetime.now(timezone.utc)
+    delta = now - dt
+
+    if delta.days >= 365:
+        years = delta.days // 365
+        return f"{years} Year{'s' if years > 1 else ''}"
+    if delta.days >= 30:
+        months = delta.days // 30
+        return f"{months} Month{'s' if months > 1 else ''}"
+    if delta.days > 0:
+        return f"{delta.days} Day{'s' if delta.days > 1 else ''}"
+    hours = delta.seconds // 3600
+    if hours > 0:
+        return f"{hours} Hour{'s' if hours > 1 else ''}"
+    minutes = delta.seconds // 60
+    if minutes > 0:
+        return f"{minutes} Minute{'s' if minutes > 1 else ''}"
+    return "Just now"
+
+
 def _location_matches(car_location: str, search_query: str, include_unknown: bool) -> bool:
-    """Проверяет, совпадает ли локация объявления с поисковым запросом."""
+    """Checks whether a listing location matches the search query."""
     if not search_query or not search_query.strip():
         return True
 
@@ -38,7 +70,7 @@ def _location_matches(car_location: str, search_query: str, include_unknown: boo
 
 
 def get_home_listings(filters, page: int = 1, per_page: int = 12):
-    """Формирует список публичных объявлений с фильтрами и пагинацией."""
+    """Builds public listings with SQL-level filtering and pagination."""
 
     q = filters.get("q", "").strip()
     price_min = _to_int(filters.get("price_min", "").strip())
@@ -47,7 +79,8 @@ def get_home_listings(filters, page: int = 1, per_page: int = 12):
     year_max = _to_int(filters.get("year_max", "").strip())
     mileage_min = _to_int(filters.get("mileage_min", "").strip())
     mileage_max = _to_int(filters.get("mileage_max", "").strip())
-    risk_level = filters.get("risk_level", "").strip()
+    transmission = filters.get("transmission", "").strip()
+    drivetrain = filters.get("drivetrain", "").strip()
     location = filters.get("location", "").strip()
     include_unknown = filters.get("include_unknown") == "on"
 
@@ -60,85 +93,103 @@ def get_home_listings(filters, page: int = 1, per_page: int = 12):
         year_max is not None,
         mileage_min is not None,
         mileage_max is not None,
-        risk_level,
+        transmission,
+        drivetrain,
     ])
 
-    query = """
-        SELECT *
-        FROM inventory
-        WHERE status IN ('active', 'demo')
-    """
-
+    where_clauses = ["status IN ('active', 'demo')"]
     params = []
 
     if q:
-        query += """
-            AND (
+        where_clauses.append("""
+            (
                 title LIKE ?
                 OR make LIKE ?
                 OR model LIKE ?
                 OR description LIKE ?
                 OR location LIKE ?
             )
-        """
+        """)
         like = f"%{q}%"
         params += [like, like, like, like, like]
 
     if price_min is not None:
-        query += " AND price >= ?"
+        where_clauses.append("price >= ?")
         params.append(price_min)
 
     if price_max is not None:
-        query += " AND price <= ?"
+        where_clauses.append("price <= ?")
         params.append(price_max)
 
     if year_min is not None:
-        query += " AND year >= ?"
+        where_clauses.append("year >= ?")
         params.append(year_min)
 
     if year_max is not None:
-        query += " AND year <= ?"
+        where_clauses.append("year <= ?")
         params.append(year_max)
 
     if mileage_min is not None:
-        query += " AND mileage_km >= ?"
+        where_clauses.append("mileage_km >= ?")
         params.append(mileage_min)
 
     if mileage_max is not None:
-        query += " AND mileage_km <= ?"
+        where_clauses.append("mileage_km <= ?")
         params.append(mileage_max)
 
-    if risk_level:
-        query += " AND risk_level = ?"
-        params.append(risk_level)
+    if transmission:
+        where_clauses.append("transmission = ?")
+        params.append(transmission)
 
-    query += " ORDER BY created_at DESC"
+    if drivetrain:
+        where_clauses.append("drivetrain = ?")
+        params.append(drivetrain)
+
+    if location:
+        search_tokens = build_location_search(location).split()
+        if search_tokens:
+            loc_clauses = []
+            for token in search_tokens:
+                loc_clauses.append("LOWER(location) LIKE ?")
+                params.append(f"%{token}%")
+            loc_sql = "(" + " OR ".join(loc_clauses) + ")"
+            if include_unknown:
+                loc_sql = f"({loc_sql} OR location IS NULL OR location = '')"
+            where_clauses.append(loc_sql)
+        elif include_unknown:
+            where_clauses.append("(location IS NULL OR location = '')")
+    elif include_unknown:
+        where_clauses.append("(location IS NULL OR location = '')")
+
+    where_sql = " AND ".join(where_clauses)
+
+    count_query = f"SELECT COUNT(*) AS count FROM inventory WHERE {where_sql}"
+    data_query = f"SELECT * FROM inventory WHERE {where_sql} ORDER BY published_at DESC LIMIT ? OFFSET ?"
 
     db = get_db()
-    rows = db.execute(query, params).fetchall()
-    db.close()
+    total = db.execute(count_query, params).fetchone()["count"]
 
-    # Фильтрация по локации на Python + формирование словарей
-    listings = []
-    for row in rows:
-        d = dict(row)
-        if location and not _location_matches(d.get("location"), location, include_unknown):
-            continue
-        d["preview_image"] = get_preview_image(d["id"], thumb=True)
-        listings.append(d)
-
-    total = len(listings)
     total_pages = max(1, (total + per_page - 1) // per_page)
     page = max(1, min(page, total_pages))
     offset = (page - 1) * per_page
 
-    paginated = listings[offset:offset + per_page]
+    rows = db.execute(data_query, params + [per_page, offset]).fetchall()
 
-    return paginated, has_any_filter, page, total_pages
+    listings = []
+    for row in rows:
+        d = dict(row)
+        d["preview_image"] = get_preview_image(d["id"], thumb=True)
+        d["has_video"] = listing_has_video(d["id"])
+        d["time_since"] = _time_since(d.get("published_at"))
+        listings.append(d)
+
+    db.close()
+
+    return listings, has_any_filter, page, total_pages
 
 
 def get_saved_listings(id_list: list[int]):
-    """Возвращает объявления по списку ID (для страницы Saved)."""
+    """Returns listings by a list of IDs (for the Saved page)."""
     if not id_list:
         return []
 
@@ -154,13 +205,15 @@ def get_saved_listings(id_list: list[int]):
     for row in rows:
         d = dict(row)
         d["preview_image"] = get_preview_image(d["id"], thumb=True)
+        d["has_video"] = listing_has_video(d["id"])
+        d["time_since"] = _time_since(d.get("published_at"))
         listings.append(d)
 
     return listings
 
 
 def get_listing_page_data(listing_id: int):
-    """Возвращает объявление и его картинки."""
+    """Returns a listing and its media."""
     db = get_db()
 
     car = db.execute("""
@@ -179,9 +232,18 @@ def get_listing_page_data(listing_id: int):
 
     db.close()
 
+    car = dict(car)
+    car["has_video"] = listing_has_video(listing_id)
+
     image_urls = get_listing_image_urls(listing_id)
+    car["has_media"] = bool(image_urls)
     if not image_urls:
         image_urls = ["/static/images/empty.png"]
     images = [{"image_url": url} for url in image_urls]
 
-    return car, images
+    thumb_urls = get_listing_media_urls(listing_id, thumb=True)
+    if not thumb_urls:
+        thumb_urls = ["/static/images/empty.png"]
+    thumbs = [{"image_url": url} for url in thumb_urls]
+
+    return car, images, thumbs

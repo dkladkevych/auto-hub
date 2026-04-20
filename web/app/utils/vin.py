@@ -1,13 +1,13 @@
 """
-Утилита для маскирования VIN на публичных страницах.
+Utility for masking VIN on public pages.
 
-Пример: 1HGCM82633A123456 → 1HG**********3456
+Example: 1HGCM82633A123456 → 1HG**********3456
 """
 
 def mask_vin(vin: str | None):
-    """Скрывает VIN для публичной страницы.
+    """Hides VIN for the public page.
 
-    Пример:
+    Example:
     1HGCM82633A123456 -> 1HG**********3456
     """
     if not vin:

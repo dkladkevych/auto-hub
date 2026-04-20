@@ -356,6 +356,52 @@
     flex-wrap: wrap;
 }
 
+.field-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.field-wrap input,
+.field-wrap select,
+.field-wrap textarea {
+    width: 100%;
+}
+
+.field-error {
+    color: var(--high);
+    font-size: 13px;
+}
+
+.has-error {
+    border-color: var(--high) !important;
+}
+
+.form-errors {
+    background: rgba(184, 106, 99, 0.08);
+    border: 1px solid rgba(184, 106, 99, 0.25);
+    border-radius: var(--radius-lg);
+    padding: 14px 18px;
+    margin-bottom: 18px;
+}
+
+.form-errors p {
+    margin: 0 0 8px;
+    color: var(--high);
+    font-weight: 600;
+}
+
+.form-errors ul {
+    margin: 0;
+    padding-left: 18px;
+    color: var(--high);
+    font-size: 14px;
+}
+
+.form-errors li {
+    margin-bottom: 4px;
+}
+
 @media (max-width: 900px) {
     .admin-form-grid-3 {
         grid-template-columns: repeat(2, minmax(0, 1fr));

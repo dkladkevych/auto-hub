@@ -1,20 +1,20 @@
 """
-Нормализация локаций для гибкого поиска.
+Location normalization for flexible search.
 
-Преобразует строку локации в набор токенов с алиасами:
-- провинции Канады (on ↔ ontario, bc ↔ british columbia)
-- города GTA (mississauga, brampton → добавляет gta, toronto)
+Transforms a location string into a set of tokens with aliases:
+- Canadian provinces (on ↔ ontario, bc ↔ british columbia)
+- GTA cities (mississauga, brampton → adds gta, toronto)
 
-Используется при поиске объявлений (services/listings.py).
+Used when searching listings (services/listings.py).
 """
 
 import re
 
 
 def build_location_search(location: str) -> str:
-    """Нормализует location для более гибкого поиска.
+    """Normalizes location for more flexible searching.
 
-    Добавляет алиасы провинций и простые локальные расширения.
+    Adds province aliases and simple local expansions.
     """
     if not location:
         return ""

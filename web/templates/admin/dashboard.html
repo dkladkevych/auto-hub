@@ -8,6 +8,7 @@
     <div class="admin-actions">
         <a class="soft-link" href="/{{ ADMIN_PATH }}/new">Add listing</a>
         <form method="POST" action="/{{ ADMIN_PATH }}/logout">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit" class="secondary-btn">Logout</button>
         </form>
     </div>

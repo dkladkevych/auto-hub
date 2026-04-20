@@ -7,9 +7,11 @@
     const adminPath = opts.adminPath;
     const errorEl = document.getElementById("imageError");
 
-    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
-    const MAX_IMAGES = 10;
-    const ALLOWED_EXTENSIONS = ["jpg", "jpeg", "png", "webp"];
+    const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+    const MAX_VIDEO_SIZE = 15 * 1024 * 1024; // 15 MB
+    const MAX_MEDIA = 10;
+    const ALLOWED_IMAGE_EXTS = ["jpg", "jpeg", "png", "webp"];
+    const ALLOWED_VIDEO_EXTS = ["mp4"];
 
     let images = (opts.initial || []).map(function (url) {
       return { type: "existing", url: url };
@@ -17,7 +19,7 @@
     let dragIndex = null;
     let activeSaveMode = null;
 
-    // Ловим клик по кнопкам submit, чтобы знать save_mode
+    // Capture submit button clicks to know the save_mode
     form.querySelectorAll("button[type='submit']").forEach(function (btn) {
       btn.addEventListener("click", function () {
         activeSaveMode = btn.value;
@@ -43,17 +45,30 @@
 
     function validateFile(file) {
       const ext = getExtension(file.name);
-      if (ALLOWED_EXTENSIONS.indexOf(ext) === -1) {
-        return "Only JPG, JPEG, PNG, WEBP images are allowed.";
-      }
-      if (!file.type || !file.type.startsWith("image/")) {
-        return "Only image files are allowed.";
+      const isImage = ALLOWED_IMAGE_EXTS.indexOf(ext) !== -1;
+      const isVideo = ALLOWED_VIDEO_EXTS.indexOf(ext) !== -1;
+
+      if (!isImage && !isVideo) {
+        return "Only JPG, JPEG, PNG, WEBP images and MP4 videos are allowed.";
       }
       if (file.size === 0) {
         return "File is empty.";
       }
-      if (file.size > MAX_FILE_SIZE) {
-        return "Each image must be 5MB or smaller.";
+      if (isImage) {
+        if (!file.type || !file.type.startsWith("image/")) {
+          return "Only image files are allowed.";
+        }
+        if (file.size > MAX_IMAGE_SIZE) {
+          return "Each image must be 5MB or smaller.";
+        }
+      }
+      if (isVideo) {
+        if (!file.type || file.type !== "video/mp4") {
+          return "Only MP4 video files are allowed.";
+        }
+        if (file.size > MAX_VIDEO_SIZE) {
+          return "Each video must be 15MB or smaller.";
+        }
       }
       return null;
     }
@@ -66,9 +81,23 @@
         card.draggable = true;
         card.dataset.index = index;
 
-        const preview = document.createElement("img");
-        preview.className = "img-thumb";
-        preview.src = img.type === "existing" ? img.url : URL.createObjectURL(img.file);
+        let preview;
+        const isVideo = img.type === "existing"
+          ? img.url.toLowerCase().endsWith(".mp4")
+          : img.file && img.file.type === "video/mp4";
+
+        if (isVideo) {
+          preview = document.createElement("video");
+          preview.className = "img-thumb";
+          preview.muted = true;
+          preview.playsInline = true;
+          preview.preload = "metadata";
+          preview.src = img.type === "existing" ? img.url : URL.createObjectURL(img.file);
+        } else {
+          preview = document.createElement("img");
+          preview.className = "img-thumb";
+          preview.src = img.type === "existing" ? img.url : URL.createObjectURL(img.file);
+        }
 
         const removeBtn = document.createElement("button");
         removeBtn.type = "button";
@@ -126,8 +155,8 @@
         return;
       }
 
-      if (images.length + newFiles.length > MAX_IMAGES) {
-        showError("Max " + MAX_IMAGES + " images allowed.");
+      if (images.length + newFiles.length > MAX_MEDIA) {
+        showError("Max " + MAX_MEDIA + " media files allowed.");
         return;
       }
 

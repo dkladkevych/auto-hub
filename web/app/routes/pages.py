@@ -1,7 +1,7 @@
 """
-Статические и SEO-страницы (terms, privacy, 404, robots.txt, sitemap.xml).
+Static and SEO pages (terms, privacy, 404, robots.txt, sitemap.xml).
 
-sitemap.xml формируется динамически из активных объявлений в inventory.
+sitemap.xml is generated dynamically from active inventory listings.
 """
 
 from flask import Blueprint, current_app, render_template, request

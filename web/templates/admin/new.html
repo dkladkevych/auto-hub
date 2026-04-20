@@ -2,6 +2,10 @@
 
 {% block title %}Add Listing | Auto-Hub{% endblock %}
 
+{% block head %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/easymde.min.css') }}">
+{% endblock %}
+
 {% block content %}
 <div class="page-head">
     <h2>Add Listing</h2>
@@ -18,7 +22,19 @@
     <p class="error-text">{{ error }}</p>
 {% endif %}
 
+{% if errors %}
+    <div class="form-errors">
+        <p>Please fix the following errors:</p>
+        <ul>
+            {% for field, msg in errors.items() %}
+            <li><strong>{{ field | replace('_', ' ') | title }}</strong>: {{ msg }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endif %}
+
 <form method="POST" enctype="multipart/form-data" class="form-card admin-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <section class="admin-form-section">
         <div class="section-head">
             <h3>Basics</h3>
@@ -26,24 +42,72 @@
         </div>
 
         <div class="admin-form-grid admin-form-grid-3">
-            <input type="number" name="year" placeholder="Year" required>
-            <input type="text" name="make" placeholder="Make" required>
-            <input type="text" name="model" placeholder="Model" required>
+            <div class="field-wrap">
+                <input type="number" name="year" placeholder="Year *" value="{{ form_data.get('year', '') }}" required class="{% if errors and errors.get('year') %}has-error{% endif %}">
+                {% if errors and errors.get('year') %}<span class="field-error">{{ errors['year'] }}</span>{% endif %}
+            </div>
+            <div class="field-wrap">
+                <input type="text" name="make" placeholder="Make *" value="{{ form_data.get('make', '') }}" required class="{% if errors and errors.get('make') %}has-error{% endif %}">
+                {% if errors and errors.get('make') %}<span class="field-error">{{ errors['make'] }}</span>{% endif %}
+            </div>
+            <div class="field-wrap">
+                <input type="text" name="model" placeholder="Model *" value="{{ form_data.get('model', '') }}" required class="{% if errors and errors.get('model') %}has-error{% endif %}">
+                {% if errors and errors.get('model') %}<span class="field-error">{{ errors['model'] }}</span>{% endif %}
+            </div>
         </div>
 
         <div class="admin-form-grid admin-form-grid-2">
-            <input type="number" name="price" placeholder="Price" required>
-            <input type="number" name="mileage_km" placeholder="Mileage (km)">
+            <div class="field-wrap">
+                <input type="number" name="price" placeholder="Price *" value="{{ form_data.get('price', '') }}" required class="{% if errors and errors.get('price') %}has-error{% endif %}">
+                {% if errors and errors.get('price') %}<span class="field-error">{{ errors['price'] }}</span>{% endif %}
+            </div>
+            <div class="field-wrap">
+                <input type="number" name="mileage_km" placeholder="Mileage (km) *" value="{{ form_data.get('mileage_km', '') }}" required class="{% if errors and errors.get('mileage_km') %}has-error{% endif %}">
+                {% if errors and errors.get('mileage_km') %}<span class="field-error">{{ errors['mileage_km'] }}</span>{% endif %}
+            </div>
         </div>
 
-        <input type="text" name="location" placeholder="Location">
-        <input type="text" name="source_url" placeholder="Source URL">
+        <div class="admin-form-grid admin-form-grid-2">
+            <div class="field-wrap">
+                <select name="transmission" required class="{% if errors and errors.get('transmission') %}has-error{% endif %}">
+                    <option value="">Transmission *</option>
+                    <option value="Automatic" {% if form_data.get('transmission') == 'Automatic' %}selected{% endif %}>Automatic</option>
+                    <option value="Manual" {% if form_data.get('transmission') == 'Manual' %}selected{% endif %}>Manual</option>
+                    <option value="CVT" {% if form_data.get('transmission') == 'CVT' %}selected{% endif %}>CVT</option>
+                    <option value="Unknown" {% if form_data.get('transmission') == 'Unknown' %}selected{% endif %}>Unknown</option>
+                </select>
+                {% if errors and errors.get('transmission') %}<span class="field-error">{{ errors['transmission'] }}</span>{% endif %}
+            </div>
+            <div class="field-wrap">
+                <select name="drivetrain" required class="{% if errors and errors.get('drivetrain') %}has-error{% endif %}">
+                    <option value="">Drivetrain *</option>
+                    <option value="FWD" {% if form_data.get('drivetrain') == 'FWD' %}selected{% endif %}>FWD</option>
+                    <option value="RWD" {% if form_data.get('drivetrain') == 'RWD' %}selected{% endif %}>RWD</option>
+                    <option value="AWD" {% if form_data.get('drivetrain') == 'AWD' %}selected{% endif %}>AWD</option>
+                    <option value="4WD" {% if form_data.get('drivetrain') == '4WD' %}selected{% endif %}>4WD</option>
+                    <option value="Unknown" {% if form_data.get('drivetrain') == 'Unknown' %}selected{% endif %}>Unknown</option>
+                </select>
+                {% if errors and errors.get('drivetrain') %}<span class="field-error">{{ errors['drivetrain'] }}</span>{% endif %}
+            </div>
+        </div>
 
-        <textarea name="description" placeholder="Public description" required></textarea>
+        <div class="field-wrap">
+            <input type="text" name="location" placeholder="Location *" value="{{ form_data.get('location', '') }}" required class="{% if errors and errors.get('location') %}has-error{% endif %}">
+            {% if errors and errors.get('location') %}<span class="field-error">{{ errors['location'] }}</span>{% endif %}
+        </div>
+        <div class="field-wrap">
+            <input type="text" name="source_url" placeholder="Source URL *" value="{{ form_data.get('source_url', '') }}" required class="{% if errors and errors.get('source_url') %}has-error{% endif %}">
+            {% if errors and errors.get('source_url') %}<span class="field-error">{{ errors['source_url'] }}</span>{% endif %}
+        </div>
+
+        <div class="field-wrap">
+            <textarea name="description" placeholder="Public description *" class="{% if errors and errors.get('description') %}has-error{% endif %}">{{ form_data.get('description', '') }}</textarea>
+            {% if errors and errors.get('description') %}<span class="field-error">{{ errors['description'] }}</span>{% endif %}
+        </div>
 
         <div class="drop-zone" id="dropZone">
             <p>Drag & drop images here or click to browse</p>
-            <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.webp">
+            <input type="file" id="fileInput" multiple accept=".jpg,.jpeg,.png,.webp,.mp4">
         </div>
         <div class="img-gallery" id="imageGallery"></div>
         <p class="error-text" id="imageError" style="display:none"></p>
@@ -58,53 +122,35 @@
         </div>
 
         <div class="admin-form-grid admin-form-grid-2">
-            <select name="risk_level" required>
-                <option value="">Risk level</option>
-                <option value="LOW">LOW</option>
-                <option value="MEDIUM">MEDIUM</option>
-                <option value="HIGH">HIGH</option>
-            </select>
-
-            <select name="condition">
-                <option value="">Condition</option>
-                <option value="Good">Good</option>
-                <option value="Fair">Fair</option>
-                <option value="Poor">Poor</option>
-            </select>
+            <div class="field-wrap">
+                <select name="condition" required class="{% if errors and errors.get('condition') %}has-error{% endif %}">
+                    <option value="">Condition *</option>
+                    <option value="Good" {% if form_data.get('condition') == 'Good' %}selected{% endif %}>Good</option>
+                    <option value="Fair" {% if form_data.get('condition') == 'Fair' %}selected{% endif %}>Fair</option>
+                    <option value="Poor" {% if form_data.get('condition') == 'Poor' %}selected{% endif %}>Poor</option>
+                </select>
+                {% if errors and errors.get('condition') %}<span class="field-error">{{ errors['condition'] }}</span>{% endif %}
+            </div>
         </div>
 
-        <textarea name="notes" placeholder="Internal notes (admin only)"></textarea>
-    </section>
-
-    <hr>
-
-    <section class="admin-form-section">
-        <div class="section-head">
-            <h3>Status</h3>
-            <p>Seller responsiveness and listing state.</p>
-        </div>
-
-        <div class="admin-form-grid admin-form-grid-2">
-            <select name="seller_status">
-                <option value="">Seller status</option>
-                <option value="Unknown">Unknown</option>
-                <option value="Responsive">Responsive</option>
-                <option value="Suspicious">Suspicious</option>
-            </select>
-        </div>
-
-        <div class="form-actions">
-            <button type="submit" name="save_mode" value="draft">Save draft</button>
-            <button type="submit" name="save_mode" value="demo">Save as demo</button>
-            <button type="submit" name="save_mode" value="publish">Publish</button>
+        <div class="field-wrap">
+            <textarea name="notes" placeholder="Internal notes (admin only)">{{ form_data.get('notes', '') }}</textarea>
         </div>
     </section>
+
+    <div class="form-actions" style="margin-top: 10px;">
+        <button type="submit" name="save_mode" value="draft">Save draft</button>
+        <button type="submit" name="save_mode" value="demo">Save as demo</button>
+        <button type="submit" name="save_mode" value="publish">Publish</button>
+    </div>
 </form>
 {% endblock %}
 
 {% block scripts %}
+<script src="{{ url_for('static', filename='js/easymde.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/admin_images.js') }}"></script>
 <script>
+const easyMDE = new EasyMDE({ element: document.querySelector('textarea[name="description"]') });
 ImageUploader({
     containerId: 'imageGallery',
     dropZoneId: 'dropZone',

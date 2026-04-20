@@ -1,8 +1,8 @@
 """
-Централизованная конфигурация приложения.
+Centralized application configuration.
 
-Читает переменные из .env (SECRET_KEY, ADMIN_PASSWORD, ADMIN_PATH)
-и определяет пути к папкам данных (БД, изображения).
+Reads variables from .env (SECRET_KEY, ADMIN_PASSWORD, ADMIN_PATH)
+and defines data folder paths (DB, images).
 """
 
 import os
@@ -14,9 +14,10 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
 class Config:
-    """Централизованный конфиг приложения."""
+    """Centralized app configuration."""
 
     SECRET_KEY = os.getenv("SECRET_KEY", "fallback_secret")
+    ADMIN_PASSWORD_HASH = os.getenv("ADMIN_PASSWORD_HASH", "")
     ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "fallback_password")
     ADMIN_PATH = os.getenv("ADMIN_PATH", "admin")
 

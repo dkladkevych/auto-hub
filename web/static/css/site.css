@@ -148,7 +148,7 @@
 
 .card-head-row {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 10px;
     margin-bottom: 10px;
@@ -190,8 +190,41 @@
 }
 
 .card .price {
-    margin: 0 0 14px;
-    font-size: 20px;
+    margin: 0;
+    font-size: 26px;
+}
+
+.card-price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.card-location {
+    color: var(--muted);
+    font-size: 14px;
+    text-align: right;
+}
+
+.card-footer-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.card-time {
+    display: inline-block;
+    line-height: 44px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.card .btn {
+    margin-top: 0;
 }
 
 .desc {
@@ -208,6 +241,10 @@
 
 .card .btn {
     margin-top: 18px;
+}
+
+.card-footer-row .btn {
+    margin-top: 0;
 }
 
 .card-mini-specs {
@@ -229,8 +266,22 @@
     font-size: 13px;
 }
 
-.card .risk-pill {
-    margin-bottom: 14px;
+.video-badge {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+    z-index: 2;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.video-badge img {
+    width: 20px;
+    height: 20px;
+    filter: brightness(0) invert(1) drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
 }
 
 /* ========== Listing page ========== */
@@ -263,6 +314,46 @@
     padding: 0;
     overflow: hidden;
     position: relative;
+    border-radius: 16px;
+}
+
+.main-image-wrap.is-clickable {
+    cursor: pointer;
+}
+
+.main-video-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.main-video-play {
+    pointer-events: auto;
+    width: 64px;
+    height: 64px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.main-video-play:hover {
+    background: rgba(255, 255, 255, 0.22);
+    transform: scale(1.05);
+}
+
+.main-video-play svg {
+    width: 28px;
+    height: 28px;
 }
 
 .main-viewer-image {
@@ -350,11 +441,41 @@
 .extra-block {
     margin-top: 18px;
     padding-top: 18px;
-    border-top: 1px solid var(--border);
 }
 
 .description-block {
     color: var(--muted);
+}
+
+.description-content p {
+    margin: 0 0 10px;
+    line-height: 1.6;
+}
+
+.description-content ul,
+.description-content ol {
+    margin: 0 0 10px 20px;
+    padding: 0;
+}
+
+.description-content li {
+    margin-bottom: 4px;
+}
+
+.description-content strong {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.description-content em {
+    font-style: italic;
+}
+
+.description-content h1,
+.description-content h2,
+.description-content h3 {
+    margin: 12px 0 8px;
+    color: var(--text);
 }
 
 .description-block h3,
@@ -592,6 +713,184 @@
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
 }
 
+/* Custom video player in lightbox */
+.lightbox-video-wrap {
+    position: relative;
+    display: inline-block;
+    max-width: 100%;
+    max-height: 88vh;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #000;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    vertical-align: middle;
+}
+
+.lightbox-video {
+    display: block;
+    max-width: 100%;
+    max-height: 88vh;
+    height: auto;
+    cursor: pointer;
+}
+
+.video-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.video-big-play {
+    pointer-events: auto;
+    width: 72px;
+    height: 72px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(6px);
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.video-big-play:hover {
+    background: rgba(255, 255, 255, 0.22);
+}
+
+.video-big-play svg {
+    width: 32px;
+    height: 32px;
+}
+
+.video-controls {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0));
+    pointer-events: auto;
+}
+
+.vc-play {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.vc-play svg {
+    width: 22px;
+    height: 22px;
+}
+
+.vc-progress {
+    flex: 1;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.vc-progress::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+}
+
+.vc-progress::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #fff;
+    border: none;
+    cursor: pointer;
+}
+
+.vc-time {
+    flex-shrink: 0;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.9);
+    font-variant-numeric: tabular-nums;
+    min-width: 90px;
+    text-align: center;
+}
+
+.vc-volume-wrap {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.vc-vol-icon {
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.vc-vol-icon svg,
+.vc-vol-icon img {
+    width: 18px;
+    height: 18px;
+    filter: brightness(0) invert(1);
+}
+
+.vc-volume {
+    width: 60px;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.vc-volume::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fff;
+    cursor: pointer;
+}
+
+.vc-volume::-moz-range-thumb {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #fff;
+    border: none;
+    cursor: pointer;
+}
+
 .lightbox-close,
 .lightbox-nav {
     position: absolute;
@@ -610,6 +909,10 @@
     width: 48px;
     height: 48px;
     font-size: 28px;
+}
+
+.lightbox-nav.hidden {
+    display: none;
 }
 
 .lightbox-nav {
@@ -880,10 +1183,6 @@
         min-height: 28px;
         padding: 0 9px;
         font-size: 12px;
-    }
-
-    .card .risk-pill {
-        margin-bottom: 12px;
     }
 
     .card .desc {

@@ -1,14 +1,14 @@
 /**
  * favorites.js
  *
- * Избранные объявления. Хранит ID в localStorage.
- * Обновляет счётчик в шапке и состояние кнопок ❤️.
+ * Saved listings. Stores IDs in localStorage.
+ * Updates the header counter and button states.
  *
- * Связан с:
- * - public/home.html (кнопки на карточках)
- * - public/listing.html (кнопка на детальной странице)
- * - public/base.html (ссылка Saved + счётчик)
- * - public/saved.html (страница избранного)
+ * Connected to:
+ * - public/home.html (card buttons)
+ * - public/listing.html (detail page button)
+ * - public/base.html (Saved link + counter)
+ * - public/saved.html (saved page)
  */
 (function () {
     const STORAGE_KEY = "favorites";
@@ -36,7 +36,7 @@
             ids.push(listingId);
         }
         saveFavorites(ids);
-        return idx < 0; // true если добавлено
+        return idx < 0; // true if added
     }
 
     function isFavorite(listingId) {

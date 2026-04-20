@@ -54,8 +54,11 @@
                     {% if filters.get('mileage_max') %}
                         <input type="hidden" name="mileage_max" value="{{ filters.get('mileage_max') }}">
                     {% endif %}
-                    {% if filters.get('risk_level') %}
-                        <input type="hidden" name="risk_level" value="{{ filters.get('risk_level') }}">
+                    {% if filters.get('transmission') %}
+                        <input type="hidden" name="transmission" value="{{ filters.get('transmission') }}">
+                    {% endif %}
+                    {% if filters.get('drivetrain') %}
+                        <input type="hidden" name="drivetrain" value="{{ filters.get('drivetrain') }}">
                     {% endif %}
                     {% if filters.get('include_unknown') %}
                         <input type="hidden" name="include_unknown" value="on">
@@ -94,11 +97,21 @@
             <input type="number" name="mileage_min" placeholder="Mileage from" value="{{ filters.get('mileage_min', '') if filters else '' }}">
             <input type="number" name="mileage_max" placeholder="Mileage to" value="{{ filters.get('mileage_max', '') if filters else '' }}">
 
-            <select name="risk_level">
-                <option value="">Risk level</option>
-                <option value="LOW" {% if filters and filters.get('risk_level') == 'LOW' %}selected{% endif %}>LOW</option>
-                <option value="MEDIUM" {% if filters and filters.get('risk_level') == 'MEDIUM' %}selected{% endif %}>MEDIUM</option>
-                <option value="HIGH" {% if filters and filters.get('risk_level') == 'HIGH' %}selected{% endif %}>HIGH</option>
+            <select name="transmission">
+                <option value="">Transmission</option>
+                <option value="Automatic" {% if filters and filters.get('transmission') == 'Automatic' %}selected{% endif %}>Automatic</option>
+                <option value="Manual" {% if filters and filters.get('transmission') == 'Manual' %}selected{% endif %}>Manual</option>
+                <option value="CVT" {% if filters and filters.get('transmission') == 'CVT' %}selected{% endif %}>CVT</option>
+                <option value="Unknown" {% if filters and filters.get('transmission') == 'Unknown' %}selected{% endif %}>Unknown</option>
+            </select>
+
+            <select name="drivetrain">
+                <option value="">Drivetrain</option>
+                <option value="FWD" {% if filters and filters.get('drivetrain') == 'FWD' %}selected{% endif %}>FWD</option>
+                <option value="RWD" {% if filters and filters.get('drivetrain') == 'RWD' %}selected{% endif %}>RWD</option>
+                <option value="AWD" {% if filters and filters.get('drivetrain') == 'AWD' %}selected{% endif %}>AWD</option>
+                <option value="4WD" {% if filters and filters.get('drivetrain') == '4WD' %}selected{% endif %}>4WD</option>
+                <option value="Unknown" {% if filters and filters.get('drivetrain') == 'Unknown' %}selected{% endif %}>Unknown</option>
             </select>
         </div>
 
