@@ -1,7 +1,8 @@
 web/.env
 web/.venv
 web/venv
-web/data/
+web/data/db
+web/data/listings
 web/db.sqlite
 check.html
 __pycache__/

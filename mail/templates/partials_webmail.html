@@ -1,0 +1,50 @@
+{{ define "webmail_sidebar" }}
+<aside class="webmail-sidebar">
+  <div class="sidebar-header">
+    {{ if .IsCompose }}
+    <a href="/mailboxes/{{ .MailboxID }}/inbox" class="btn btn-sm">← Cancel</a>
+    {{ else }}
+    <a href="/mailboxes/{{ .MailboxID }}/compose" class="btn btn-primary btn-compose">+ Compose</a>
+    {{ end }}
+  </div>
+
+  {{ if gt (len .Mailboxes) 1 }}
+  <div class="sidebar-section">
+    <h3 class="sidebar-heading">Mailboxes</h3>
+    <nav class="account-list">
+      {{ range .Mailboxes }}
+      {{ if eq .Email $.User.Email }}
+      <a href="/mailboxes/{{ .ID }}/inbox" class="account-item {{ if eq $.MailboxID .ID }}active{{ end }}">
+        <span class="account-label">Personal</span>
+        <span class="account-email">{{ .Email }}</span>
+      </a>
+      {{ else }}
+      <a href="/mailboxes/{{ .ID }}/inbox" class="account-item {{ if eq $.MailboxID .ID }}active{{ end }}">
+        <span class="account-label">Shared</span>
+        <span class="account-email">{{ .Email }}</span>
+      </a>
+      {{ end }}
+      {{ end }}
+    </nav>
+  </div>
+  <div class="sidebar-divider"></div>
+  {{ end }}
+
+  <nav class="folder-list">
+    {{ if .Folders }}
+    {{ range .Folders }}
+    <a href="/mailboxes/{{ $.MailboxID }}/inbox?folder={{ .Name }}" class="folder-item {{ if eq $.Folder .Name }}active{{ end }}">
+      <span class="folder-name">{{ .Name }}</span>
+      <span class="folder-count">{{ .Count }}</span>
+      {{ if gt .Unseen 0 }}<span class="folder-unseen">{{ .Unseen }}</span>{{ end }}
+    </a>
+    {{ end }}
+    {{ else }}
+    <a href="/mailboxes/{{ .MailboxID }}/inbox?folder=Inbox" class="folder-item {{ if eq .Folder "Inbox" }}active{{ end }}">Inbox</a>
+    <a href="/mailboxes/{{ .MailboxID }}/inbox?folder=Sent" class="folder-item {{ if eq .Folder "Sent" }}active{{ end }}">Sent</a>
+    <a href="/mailboxes/{{ .MailboxID }}/inbox?folder=Drafts" class="folder-item {{ if eq .Folder "Drafts" }}active{{ end }}">Drafts</a>
+    <a href="/mailboxes/{{ .MailboxID }}/inbox?folder=Trash" class="folder-item {{ if eq .Folder "Trash" }}active{{ end }}">Trash</a>
+    {{ end }}
+  </nav>
+</aside>
+{{ end }}

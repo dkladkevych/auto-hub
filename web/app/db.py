@@ -66,6 +66,22 @@ def init_db(db_path=None):
         )
     """)
 
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS view_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            target_type TEXT NOT NULL CHECK(target_type IN ('site', 'listing')),
+            target_id INTEGER NOT NULL DEFAULT 0,
+            fingerprint TEXT NOT NULL,
+            viewed_date TEXT NOT NULL DEFAULT (date('now')),
+            viewed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+
+    conn.execute("""
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_view_log_unique
+        ON view_log(target_type, target_id, fingerprint, viewed_date)
+    """)
+
     # Migration: add transmission and drivetrain if missing
     for col in ("transmission", "drivetrain"):
         try:

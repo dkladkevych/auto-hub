@@ -1,0 +1,40 @@
+{{ template "head" . }}
+<body>
+<main class="container">
+<div class="auth-box">
+    <h1>Auto-Hub Mail</h1>
+    {{ if .Error }}
+    <div class="alert alert-error">{{ .Error }}</div>
+    {{ end }}
+    <form method="post" action="/login">
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="username" required autofocus placeholder="admin">
+        </div>
+        {{ if .Domains }}
+        <div class="form-group">
+            <label>Domain</label>
+            {{ if eq (len .Domains) 1 }}
+            <input type="hidden" name="domain" value="{{ (index .Domains 0).Domain }}">
+            <input type="text" value="{{ (index .Domains 0).Domain }}" disabled>
+            {{ else }}
+            <select name="domain" required>
+                {{ range .Domains }}
+                <option value="{{ .Domain }}" {{ if .IsDefault }}selected{{ end }}>{{ .Domain }}{{ if .IsDefault }} (default){{ end }}</option>
+                {{ end }}
+            </select>
+            {{ end }}
+        </div>
+        {{ else }}
+        <div class="alert alert-error">No domains configured.</div>
+        {{ end }}
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%;">Sign In</button>
+    </form>
+</div>
+</main>
+</body>
+</html>

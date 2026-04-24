@@ -10,7 +10,7 @@
     const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
     const MAX_VIDEO_SIZE = 15 * 1024 * 1024; // 15 MB
     const MAX_MEDIA = 10;
-    const ALLOWED_IMAGE_EXTS = ["jpg", "jpeg", "png", "webp"];
+    const ALLOWED_IMAGE_EXTS = ["jpg", "jpeg", "png", "webp", "avif"];
     const ALLOWED_VIDEO_EXTS = ["mp4"];
 
     let images = (opts.initial || []).map(function (url) {
@@ -49,7 +49,7 @@
       const isVideo = ALLOWED_VIDEO_EXTS.indexOf(ext) !== -1;
 
       if (!isImage && !isVideo) {
-        return "Only JPG, JPEG, PNG, WEBP images and MP4 videos are allowed.";
+        return "Only JPG, JPEG, PNG, WEBP, AVIF images and MP4 videos are allowed.";
       }
       if (file.size === 0) {
         return "File is empty.";

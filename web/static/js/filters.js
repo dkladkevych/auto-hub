@@ -29,8 +29,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "year_max",
         "mileage_min",
         "mileage_max",
-        "risk_level",
-        "include_unknown"
+        "risk_level"
     ];
 
     const hasFilter = filterKeys.some(key => params.get(key));

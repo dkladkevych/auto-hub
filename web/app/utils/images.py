@@ -20,7 +20,7 @@ from PIL import Image
 
 from ..config import Config
 
-ALLOWED_IMAGE_EXTS = {"jpg", "jpeg", "png", "webp"}
+ALLOWED_IMAGE_EXTS = {"jpg", "jpeg", "png", "webp", "avif"}
 ALLOWED_VIDEO_EXTS = {"mp4"}
 MAX_IMAGE_SIZE = 5 * 1024 * 1024       # 5 MB
 MAX_VIDEO_SIZE = 15 * 1024 * 1024      # 15 MB
@@ -69,7 +69,7 @@ def validate_media(files):
             max_size = MAX_VIDEO_SIZE
             expected_type = "video/mp4"
         else:
-            return "Only JPG, JPEG, PNG, WEBP images and MP4 videos are allowed."
+            return "Only JPG, JPEG, PNG, WEBP, AVIF images and MP4 videos are allowed."
 
         if f.content_length is not None and f.content_length > max_size:
             return f"Each file must be {max_size // (1024 * 1024)}MB or smaller."

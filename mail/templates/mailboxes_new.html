@@ -1,0 +1,67 @@
+{{ template "head" . }}
+<body>
+{{ template "nav" . }}
+<main class="container">
+<div class="page-header">
+    <h1>New Mailbox</h1>
+    <a href="/mailboxes" class="btn">Back</a>
+</div>
+
+{{ if .Error }}
+<div class="alert alert-error">{{ .Error }}</div>
+{{ end }}
+
+{{ if .Domains }}
+<form method="post" action="/mailboxes" class="form-grid">
+    <div class="form-group">
+        <label>Local Part (before @)</label>
+        <input type="text" name="local_part" required placeholder="support">
+    </div>
+    <div class="form-group">
+        <label>Domain</label>
+        {{ if eq (len .Domains) 1 }}
+        <input type="hidden" name="domain" value="{{ (index .Domains 0).Domain }}">
+        <input type="text" value="{{ (index .Domains 0).Domain }}" disabled>
+        {{ else }}
+        <select name="domain" required>
+            {{ range .Domains }}
+            <option value="{{ .Domain }}" {{ if .IsDefault }}selected{{ end }}>{{ .Domain }}{{ if .IsDefault }} (default){{ end }}</option>
+            {{ end }}
+        </select>
+        {{ end }}
+    </div>
+    <div class="form-group">
+        <label>Display Name</label>
+        <input type="text" name="display_name" placeholder="Auto-Hub Support Team">
+    </div>
+    <div class="form-group">
+        <label>Type</label>
+        <select name="mailbox_type" required>
+            <option value="shared" {{ if eq .PreselectType "shared" }}selected{{ end }}>Shared</option>
+            {{ if .CanSetSystemType }}
+            <option value="system" {{ if eq .PreselectType "system" }}selected{{ end }}>System</option>
+            {{ end }}
+        </select>
+    </div>
+    <div class="form-group">
+        <label>Quota (MB)</label>
+        <input type="number" name="quota_mb" value="1024" min="1" required>
+    </div>
+    <div class="form-group form-check">
+        <label><input type="checkbox" name="can_receive" checked> Can Receive</label>
+    </div>
+    <div class="form-group form-check">
+        <label><input type="checkbox" name="can_send" checked> Can Send</label>
+    </div>
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Create Mailbox</button>
+    </div>
+</form>
+{{ else }}
+<div class="alert alert-error">
+    No domains configured. <a href="/domains/new">Add a domain first</a>.
+</div>
+{{ end }}
+</main>
+</body>
+</html>

@@ -1,0 +1,77 @@
+{{ template "head" . }}
+<body>
+{{ template "nav" . }}
+<main class="container">
+<div class="page-header">
+    <h1>New User</h1>
+    <a href="/users" class="btn">Back</a>
+</div>
+
+{{ if .Error }}
+<div class="alert alert-error">{{ .Error }}</div>
+{{ end }}
+
+{{ if .Domains }}
+<form method="post" action="/users" class="form-grid">
+    <h2 style="margin-top: 0; font-size: 1.1rem;">Account</h2>
+    <div class="form-group">
+        <label>Username</label>
+        <input type="text" name="username" required placeholder="ivan.petrov">
+    </div>
+    <div class="form-group">
+        <label>Domain</label>
+        {{ if eq (len .Domains) 1 }}
+        <input type="hidden" name="domain" value="{{ (index .Domains 0).Domain }}">
+        <input type="text" value="{{ (index .Domains 0).Domain }}" disabled>
+        {{ else }}
+        <select name="domain" required>
+            {{ range .Domains }}
+            <option value="{{ .Domain }}" {{ if .IsDefault }}selected{{ end }}>{{ .Domain }}{{ if .IsDefault }} (default){{ end }}</option>
+            {{ end }}
+        </select>
+        {{ end }}
+    </div>
+    <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" name="full_name" required>
+    </div>
+    <div class="form-group">
+        <label>Password</label>
+        <input type="password" name="password" required>
+    </div>
+    {{ if .CanSetRole }}
+    <div class="form-group">
+        <label>Role</label>
+        <select name="role" required>
+            <option value="user" selected>User</option>
+            <option value="admin">Admin</option>
+        </select>
+    </div>
+    {{ else }}
+    <input type="hidden" name="role" value="user">
+    {{ end }}
+
+    <h2 style="margin-top: 28px; font-size: 1.1rem; border-top: 1px solid var(--border); padding-top: 20px;">Personal Mailbox</h2>
+    <div class="form-group">
+        <label>Quota (MB)</label>
+        <input type="number" name="quota_mb" value="1024" min="1" required>
+    </div>
+    <div class="form-group form-check">
+        <label><input type="checkbox" name="can_receive" checked> Can Receive emails</label>
+    </div>
+    <div class="form-group form-check">
+        <label><input type="checkbox" name="can_send" checked> Can Send emails</label>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Create User</button>
+    </div>
+</form>
+{{ else }}
+<div class="alert alert-error">
+    No domains configured. <a href="/domains/new">Add a domain first</a>.
+</div>
+{{ end }}
+</main>
+</body>
+</html>

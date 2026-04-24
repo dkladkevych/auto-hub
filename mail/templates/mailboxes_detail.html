@@ -1,0 +1,287 @@
+{{ template "head" . }}
+<body>
+{{ template "nav" . }}
+<main class="container">
+<div class="page-header">
+    <h1>{{ .Mailbox.Email }}</h1>
+    <div>
+        {{ if eq .User.Role "operator" }}
+        <a href="/mailboxes/{{ .Mailbox.ID }}/inbox" class="btn btn-primary">Open Inbox</a>
+        {{ end }}
+        <a href="/mailboxes" class="btn">Back</a>
+    </div>
+</div>
+
+<div class="tab-nav">
+    <button class="tab-btn active" data-tab="overview">Overview</button>
+    <button class="tab-btn" data-tab="edit">Edit</button>
+    {{ if ne .Mailbox.MailboxType "personal" }}
+    <button class="tab-btn" data-tab="settings">Settings</button>
+    <button class="tab-btn" data-tab="members">Members</button>
+    {{ end }}
+    <button class="tab-btn" data-tab="danger">Danger</button>
+</div>
+
+<div id="overview" class="tab-panel active">
+    <div class="detail-grid">
+        <div class="detail-card">
+            <h2>Mailbox Info</h2>
+            <dl>
+                <dt>Email Address</dt>
+                <dd>{{ .Mailbox.Email }}</dd>
+                <dt>Type</dt>
+                <dd><span class="pill pill-{{ .Mailbox.MailboxType }}">{{ .Mailbox.MailboxType }}</span></dd>
+                <dt>Domain</dt>
+                <dd>{{ .Mailbox.Domain }}</dd>
+                <dt>Display Name</dt>
+                <dd>{{ if .Mailbox.DisplayName }}{{ .Mailbox.DisplayName }}{{ else }}<span class="empty">Not set</span>{{ end }}</dd>
+                {{ if and (eq .Mailbox.MailboxType "personal") .EditUser }}
+                <dt>Full Name</dt>
+                <dd>{{ .EditUser.FullName }}</dd>
+                <dt>Role</dt>
+                <dd><span class="pill pill-{{ .EditUser.Role }}">{{ .EditUser.Role }}</span></dd>
+                <dt>Account Status</dt>
+                <dd>
+                    {{ if .EditUser.IsActive }}
+                    <span class="pill pill-active">Active</span>
+                    {{ else }}
+                    <span class="pill pill-inactive">Inactive</span>
+                    {{ end }}
+                </dd>
+                {{ end }}
+            </dl>
+        </div>
+        <div class="detail-card">
+            <h2>Technical</h2>
+            <dl>
+                <dt>Maildir Path</dt>
+                <dd><code>{{ .Mailbox.MaildirPath }}</code></dd>
+                <dt>Quota</dt>
+                <dd>{{ .Mailbox.QuotaMb }} MB</dd>
+                <dt>Receive</dt>
+                <dd>{{ if .Mailbox.CanReceive }}<span class="pill pill-active">Enabled</span>{{ else }}<span class="pill pill-inactive">Disabled</span>{{ end }}</dd>
+                <dt>Send</dt>
+                <dd>{{ if .Mailbox.CanSend }}<span class="pill pill-active">Enabled</span>{{ else }}<span class="pill pill-inactive">Disabled</span>{{ end }}</dd>
+                <dt>IMAP Login</dt>
+                <dd>{{ if .Mailbox.ImapLoginEnabled }}<span class="pill pill-active">Enabled</span>{{ else }}<span class="pill pill-inactive">Disabled</span>{{ end }}</dd>
+                <dt>SMTP Login</dt>
+                <dd>{{ if .Mailbox.SmtpLoginEnabled }}<span class="pill pill-active">Enabled</span>{{ else }}<span class="pill pill-inactive">Disabled</span>{{ end }}</dd>
+            </dl>
+        </div>
+    </div>
+</div>
+
+<div id="edit" class="tab-panel">
+    {{ if eq .Mailbox.MailboxType "personal" }}
+    {{ if .EditUser }}
+    <div class="detail-card" style="max-width: 500px;">
+        <h2>Edit User & Mailbox</h2>
+        <form method="post" action="/users/{{ .EditUser.ID }}" class="form-grid">
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" name="full_name" value="{{ .EditUser.FullName }}" required>
+            </div>
+            {{ if .CanSetRole }}
+            <div class="form-group">
+                <label>Role</label>
+                <select name="role" required>
+                    <option value="user" {{ if eq .EditUser.Role "user" }}selected{{ end }}>User</option>
+                    <option value="admin" {{ if eq .EditUser.Role "admin" }}selected{{ end }}>Admin</option>
+                </select>
+            </div>
+            {{ else }}
+            <input type="hidden" name="role" value="{{ .EditUser.Role }}">
+            {{ end }}
+            <div class="form-group form-check">
+                <label><input type="checkbox" name="is_active" {{ if .EditUser.IsActive }}checked{{ end }}> Active</label>
+            </div>
+            <div class="form-group">
+                <label>Quota (MB)</label>
+                <input type="number" name="quota_mb" value="{{ .Mailbox.QuotaMb }}" min="1" required>
+            </div>
+            <div class="form-group form-check">
+                <label><input type="checkbox" name="can_receive" {{ if .Mailbox.CanReceive }}checked{{ end }}> Can Receive emails</label>
+            </div>
+            <div class="form-group form-check">
+                <label><input type="checkbox" name="can_send" {{ if .Mailbox.CanSend }}checked{{ end }}> Can Send emails</label>
+            </div>
+            <div class="form-group">
+                <label>New Password <span style="color: var(--text-muted); font-size: 0.85rem;">(leave blank to keep current)</span></label>
+                <input type="password" name="new_password" placeholder="Enter new password">
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+    {{ else }}
+    <div class="detail-card" style="max-width: 500px;">
+        <h2>Edit Mailbox</h2>
+        <form method="post" action="/mailboxes/{{ .Mailbox.ID }}" class="form-grid">
+            <div class="form-group">
+                <label>Display Name</label>
+                <input type="text" name="display_name" value="{{ .Mailbox.DisplayName }}">
+            </div>
+            <div class="form-group">
+                <label>Quota (MB)</label>
+                <input type="number" name="quota_mb" value="{{ .Mailbox.QuotaMb }}" min="1" required>
+            </div>
+            <div class="form-group form-check">
+                <label><input type="checkbox" name="can_receive" {{ if .Mailbox.CanReceive }}checked{{ end }}> Can Receive emails</label>
+            </div>
+            <div class="form-group form-check">
+                <label><input type="checkbox" name="can_send" {{ if .Mailbox.CanSend }}checked{{ end }}> Can Send emails</label>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+    {{ end }}
+    {{ else }}
+    <div class="detail-card" style="max-width: 500px;">
+        <h2>Edit Mailbox</h2>
+        <form method="post" action="/mailboxes/{{ .Mailbox.ID }}" class="form-grid">
+            <div class="form-group">
+                <label>Display Name</label>
+                <input type="text" name="display_name" value="{{ .Mailbox.DisplayName }}">
+            </div>
+            {{ if eq .User.Role "operator" }}
+            <div class="form-group">
+                <label>Type</label>
+                <select name="mailbox_type" required>
+                    <option value="shared" {{ if eq .Mailbox.MailboxType "shared" }}selected{{ end }}>Shared</option>
+                    <option value="system" {{ if eq .Mailbox.MailboxType "system" }}selected{{ end }}>System</option>
+                </select>
+            </div>
+            {{ else }}
+            <input type="hidden" name="mailbox_type" value="{{ .Mailbox.MailboxType }}">
+            {{ end }}
+            <div class="form-group">
+                <label>Quota (MB)</label>
+                <input type="number" name="quota_mb" value="{{ .Mailbox.QuotaMb }}" min="1" required>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Changes</button>
+            </div>
+        </form>
+    </div>
+    {{ end }}
+</div>
+
+{{ if ne .Mailbox.MailboxType "personal" }}
+<div id="settings" class="tab-panel">
+    <div class="detail-card" style="max-width: 500px;">
+        <h2>Mailbox Settings</h2>
+        <form method="post" action="/mailboxes/{{ .Mailbox.ID }}/settings" class="form-grid">
+            <div class="form-group form-check">
+                <label><input type="checkbox" name="can_receive" {{ if .Mailbox.CanReceive }}checked{{ end }}> Can Receive emails</label>
+            </div>
+            <div class="form-group form-check">
+                <label><input type="checkbox" name="can_send" {{ if .Mailbox.CanSend }}checked{{ end }}> Can Send emails</label>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Settings</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="members" class="tab-panel">
+    <div class="detail-grid">
+        <div class="detail-card">
+            <h2>Current Members</h2>
+            {{ if .Members }}
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{ range .Members }}
+                    <tr>
+                        <td>{{ .User.FullName }} <span style="color: var(--text-muted); font-size: 0.85rem;">({{ .User.Email }})</span></td>
+                        <td><span class="pill pill-{{ .AccessRole }}">{{ .AccessRole }}</span></td>
+                        <td>
+                            <form method="post" action="/mailboxes/{{ $.Mailbox.ID }}/members/{{ .ID }}/delete" class="inline-form" onsubmit="return confirm('Remove {{ .User.FullName }}?');">
+                                <button type="submit" class="btn btn-sm btn-danger">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {{ end }}
+                </tbody>
+            </table>
+            {{ else }}
+            <p class="empty">No members assigned to this mailbox yet.</p>
+            {{ end }}
+        </div>
+
+        <div class="detail-card">
+            <h2>Add Member</h2>
+            <form method="post" action="/mailboxes/{{ .Mailbox.ID }}/members" class="form-grid">
+                <div class="form-group">
+                    <label>User</label>
+                    <select name="user_id" required>
+                        <option value="">Select user...</option>
+                        {{ range .Users }}
+                        <option value="{{ .ID }}">{{ .FullName }} ({{ .Email }})</option>
+                        {{ end }}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Access Role</label>
+                    <select name="access_role" required>
+                        <option value="read_only">Read Only</option>
+                        <option value="user">User</option>
+                        <option value="manager">Manager</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Add Member</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{ end }}
+
+<div id="danger" class="tab-panel">
+    <div class="detail-grid">
+        <div class="detail-card" style="max-width: 500px;">
+            <h2 style="color: var(--danger);">Danger Zone</h2>
+            <p class="empty">Deleting this mailbox cannot be undone.</p>
+            {{ if eq .Mailbox.MailboxType "personal" }}
+            {{ if .EditUser }}
+            <form method="post" action="/users/{{ .EditUser.ID }}/delete" class="inline-form" onsubmit="return confirm('Delete user {{ .Mailbox.Email }} and their mailbox? This cannot be undone.');">
+                <button type="submit" class="btn btn-danger">Delete User & Mailbox</button>
+            </form>
+            {{ else }}
+            <form method="post" action="/mailboxes/{{ .Mailbox.ID }}/delete" class="inline-form" onsubmit="return confirm('Delete mailbox {{ .Mailbox.Email }}? This cannot be undone.');">
+                <button type="submit" class="btn btn-danger">Delete Mailbox</button>
+            </form>
+            {{ end }}
+            {{ else }}
+            <form method="post" action="/mailboxes/{{ .Mailbox.ID }}/delete" class="inline-form" onsubmit="return confirm('Delete mailbox {{ .Mailbox.Email }}? This cannot be undone.');">
+                <button type="submit" class="btn btn-danger">Delete Mailbox</button>
+            </form>
+            {{ end }}
+        </div>
+    </div>
+</div>
+
+<script>
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+    });
+});
+</script>
+</main>
+</body>
+</html>

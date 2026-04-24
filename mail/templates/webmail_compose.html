@@ -1,0 +1,58 @@
+{{ template "head" . }}
+<body>
+{{ template "nav" . }}
+<main class="webmail-layout">
+  {{ template "webmail_sidebar" . }}
+
+  <section class="webmail-content">
+    <div class="content-header">
+      <h1>Compose</h1>
+    </div>
+
+    {{ if .Error }}
+    <div class="alert alert-error">{{ .Error }}</div>
+    {{ end }}
+
+    <form method="post" action="/mailboxes/{{ .MailboxID }}/compose" class="compose-form">
+      <div class="form-group">
+        <label>From</label>
+        {{ if gt (len .FromOptions) 1 }}
+        <select name="from_mailbox_id" required>
+          {{ range .FromOptions }}
+          <option value="{{ .ID }}" {{ if eq $.MailboxID .ID }}selected{{ end }}>{{ .Email }}</option>
+          {{ end }}
+        </select>
+        {{ else if eq (len .FromOptions) 1 }}
+        <input type="text" value="{{ (index .FromOptions 0).Email }}" disabled>
+        <input type="hidden" name="from_mailbox_id" value="{{ (index .FromOptions 0).ID }}">
+        {{ else }}
+        <input type="text" value="{{ .User.Email }}" disabled>
+        {{ end }}
+      </div>
+      <div class="form-group">
+        <label>To</label>
+        <input type="text" name="to" value="{{ if .Draft }}{{ .Draft.To }}{{ end }}" placeholder="recipient@example.com" required>
+      </div>
+      <div class="form-group">
+        <label>Cc</label>
+        <input type="text" name="cc" value="{{ if .Draft }}{{ .Draft.Cc }}{{ end }}" placeholder="cc@example.com">
+      </div>
+      <div class="form-group">
+        <label>Subject</label>
+        <input type="text" name="subject" value="{{ if .Draft }}{{ .Draft.Subject }}{{ end }}" placeholder="Subject" required>
+      </div>
+      <div class="form-group">
+        <label>Message</label>
+        <textarea name="text_body" rows="12" placeholder="Write your message here...">{{ if .Draft }}{{ .Draft.TextBody }}{{ end }}</textarea>
+      </div>
+      <input type="hidden" name="html_body" value="">
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary">Send</button>
+        <button type="submit" formaction="/mailboxes/{{ .MailboxID }}/compose/draft" class="btn">Save Draft</button>
+      </div>
+    </form>
+  </section>
+</main>
+</body>
+</html>

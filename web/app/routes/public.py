@@ -34,8 +34,10 @@ def home():
 
 @public_bp.route("/listing/<int:id>")
 def listing(id):
-    log_listing_view(id)
     car, images, thumbs = get_listing_page_data(id)
+
+    if car.get("status") in ("active", "demo"):
+        log_listing_view(id)
 
     return render_template(
         "public/listing.html",

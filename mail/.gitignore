@@ -1,0 +1,15 @@
+# Binaries
+main
+server
+*.exe
+
+# SQLite database files
+*.db
+*.db-shm
+*.db-wal
+
+# Environment files
+.env
+
+# OS files
+.DS_Store

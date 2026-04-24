@@ -1,0 +1,56 @@
+{{ template "head" . }}
+<body>
+{{ template "nav" . }}
+<main class="webmail-layout">
+  {{ template "webmail_sidebar" . }}
+
+  <section class="webmail-content">
+    <div class="content-header message-actions">
+      <a href="/mailboxes/{{ .MailboxID }}/inbox?folder={{ .Folder }}" class="btn btn-sm">← Back</a>
+      <div class="actions-right">
+        <form method="post" action="/mailboxes/{{ .MailboxID }}/messages/{{ .Message.ID }}/seen" class="inline-form">
+          <input type="hidden" name="folder" value="{{ .Folder }}">
+          <input type="hidden" name="seen" value="{{ if .Message.Seen }}false{{ else }}true{{ end }}">
+          <button type="submit" class="btn btn-sm">{{ if .Message.Seen }}Mark Unread{{ else }}Mark Read{{ end }}</button>
+        </form>
+        <form method="post" action="/mailboxes/{{ .MailboxID }}/messages/{{ .Message.ID }}/delete" class="inline-form" onsubmit="return confirm('Delete this message?');">
+          <input type="hidden" name="folder" value="{{ .Folder }}">
+          <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+        </form>
+      </div>
+    </div>
+
+    <article class="message-detail">
+      <header class="message-detail-header">
+        <h1>{{ if .Message.Subject }}{{ .Message.Subject }}{{ else }}<em>(no subject)</em>{{ end }}</h1>
+        <div class="message-detail-meta">
+          <div><strong>From:</strong> {{ .Message.From }}</div>
+          <div><strong>To:</strong> {{ .Message.To }}</div>
+          {{ if .Message.Cc }}<div><strong>Cc:</strong> {{ .Message.Cc }}</div>{{ end }}
+          <div><strong>Date:</strong> {{ .Message.Date.Format "Mon, Jan 02, 2006 15:04" }}</div>
+        </div>
+      </header>
+      <div class="message-detail-body">
+        {{ if .Message.HTMLBody }}
+        <div class="message-html">{{ .HTMLBody }}</div>
+        {{ else if .Message.TextBody }}
+        <pre class="message-text">{{ .Message.TextBody }}</pre>
+        {{ else }}
+        <p class="empty">(no content)</p>
+        {{ end }}
+      </div>
+      {{ if .Message.Attachments }}
+      <div class="message-attachments">
+        <h3>Attachments</h3>
+        <ul>
+          {{ range .Message.Attachments }}
+          <li>{{ .Filename }} ({{ .ContentType }}, {{ .Size }} bytes)</li>
+          {{ end }}
+        </ul>
+      </div>
+      {{ end }}
+    </article>
+  </section>
+</main>
+</body>
+</html>

@@ -54,21 +54,6 @@ def _time_since(dt_str):
     return "Just now"
 
 
-def _location_matches(car_location: str, search_query: str, include_unknown: bool) -> bool:
-    """Checks whether a listing location matches the search query."""
-    if not search_query or not search_query.strip():
-        return True
-
-    car_location = (car_location or "").strip()
-    if not car_location:
-        return include_unknown
-
-    search_tokens = set(build_location_search(search_query).split())
-    car_tokens = set(build_location_search(car_location).split())
-
-    return bool(search_tokens & car_tokens)
-
-
 def get_home_listings(filters, page: int = 1, per_page: int = 12):
     """Builds public listings with SQL-level filtering and pagination."""
 
@@ -82,7 +67,6 @@ def get_home_listings(filters, page: int = 1, per_page: int = 12):
     transmission = filters.get("transmission", "").strip()
     drivetrain = filters.get("drivetrain", "").strip()
     location = filters.get("location", "").strip()
-    include_unknown = filters.get("include_unknown") == "on"
 
     has_any_filter = any([
         q,
@@ -153,13 +137,7 @@ def get_home_listings(filters, page: int = 1, per_page: int = 12):
                 loc_clauses.append("LOWER(location) LIKE ?")
                 params.append(f"%{token}%")
             loc_sql = "(" + " OR ".join(loc_clauses) + ")"
-            if include_unknown:
-                loc_sql = f"({loc_sql} OR location IS NULL OR location = '')"
             where_clauses.append(loc_sql)
-        elif include_unknown:
-            where_clauses.append("(location IS NULL OR location = '')")
-    elif include_unknown:
-        where_clauses.append("(location IS NULL OR location = '')")
 
     where_sql = " AND ".join(where_clauses)
 

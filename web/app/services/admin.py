@@ -296,6 +296,14 @@ def update_listing(listing_id: int, data):
 def delete_listing_by_id(listing_id: int):
     db = get_db()
     db.execute("DELETE FROM inventory WHERE id = ?", (listing_id,))
+    db.execute(
+        "DELETE FROM view_log WHERE target_type = 'listing' AND target_id = ?",
+        (listing_id,),
+    )
+    db.execute(
+        "DELETE FROM stats WHERE target_type = 'listing' AND target_id = ?",
+        (listing_id,),
+    )
     db.commit()
     db.close()
 

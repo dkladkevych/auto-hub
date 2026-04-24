@@ -1,0 +1,45 @@
+{{ template "head" . }}
+<body>
+{{ template "nav" . }}
+<main class="webmail-layout">
+  {{ template "webmail_sidebar" . }}
+
+  <section class="webmail-content">
+    <div class="content-header">
+      <h1>{{ .Folder }}</h1>
+      {{ if eq .Folder "Trash" }}
+      <form method="post" action="/mailboxes/{{ .MailboxID }}/empty-trash" class="inline-form" onsubmit="return confirm('Permanently delete all messages in Trash?');">
+        <button type="submit" class="btn btn-danger">Empty Trash</button>
+      </form>
+      {{ end }}
+    </div>
+
+    {{ if .Messages }}
+    <div class="message-list">
+      {{ range .Messages }}
+      <a href="/mailboxes/{{ $.MailboxID }}/messages/{{ .ID }}?folder={{ $.Folder }}" class="message-row {{ if not .Seen }}unseen{{ end }}">
+        <div class="message-meta">
+          <span class="message-from">{{ .From }}</span>
+          <span class="message-date">{{ .Date.Format "Jan 02, 15:04" }}</span>
+        </div>
+        <div class="message-subject">
+          {{ if .Flagged }}<span class="flagged">★</span>{{ end }}
+          {{ if .Answered }}<span class="answered">↵</span>{{ end }}
+          {{ if .Subject }}{{ .Subject }}{{ else }}<em>(no subject)</em>{{ end }}
+          {{ if eq $.Folder "Trash" }}
+          <span class="trash-ttl">{{ .TrashDaysLeft }} days left</span>
+          {{ end }}
+        </div>
+        <div class="message-snippet">{{ .Snippet }}</div>
+      </a>
+      {{ end }}
+    </div>
+    {{ else }}
+    <div class="empty-state">
+      <p>No messages in {{ .Folder }}.</p>
+    </div>
+    {{ end }}
+  </section>
+</main>
+</body>
+</html>
