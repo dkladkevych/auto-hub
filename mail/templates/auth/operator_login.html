@@ -9,7 +9,8 @@
     <div class="alert alert-error">{{ .Error }}</div>
     {{ end }}
 
-    <form method="post" action="/operator/login">
+    <form method="post" action="{{.OperatorLoginPath}}">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
         <div class="form-group">
             <label>Password</label>
             <input type="password" name="password" required autofocus placeholder="Enter operator password">

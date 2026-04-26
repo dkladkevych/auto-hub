@@ -1,0 +1,40 @@
+{{ template "head" . }}
+<body>
+{{ template "nav" . }}
+<main class="container">
+<div class="page-header">
+    <h1>Settings</h1>
+    <a href="/inbox" class="btn">Back</a>
+</div>
+
+<div class="detail-card" style="max-width: 500px;">
+    <h2>Profile</h2>
+    {{ if .Error }}
+    <div class="alert alert-error">{{ .Error }}</div>
+    {{ end }}
+    <form method="post" action="/settings" class="form-grid">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" name="full_name" value="{{ .User.FullName }}" required>
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="text" value="{{ .User.Email }}" disabled>
+        </div>
+        <div class="form-group">
+            <label>New Password <span style="color: var(--text-muted); font-size: 0.85rem;">(leave blank to keep current)</span></label>
+            <input type="password" name="new_password" placeholder="Enter new password">
+        </div>
+        <div class="form-group">
+            <label>Confirm Password</label>
+            <input type="password" name="confirm_password" placeholder="Repeat new password">
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+    </form>
+</div>
+</main>
+</body>
+</html>

@@ -41,6 +41,7 @@
     {{ end }}
     {{ else }}
     <a href="/mailboxes/{{ .MailboxID }}/inbox?folder=Inbox" class="folder-item {{ if eq .Folder "Inbox" }}active{{ end }}">Inbox</a>
+    <a href="/mailboxes/{{ .MailboxID }}/inbox?folder=Starred" class="folder-item {{ if eq .Folder "Starred" }}active{{ end }}">Starred</a>
     <a href="/mailboxes/{{ .MailboxID }}/inbox?folder=Sent" class="folder-item {{ if eq .Folder "Sent" }}active{{ end }}">Sent</a>
     <a href="/mailboxes/{{ .MailboxID }}/inbox?folder=Drafts" class="folder-item {{ if eq .Folder "Drafts" }}active{{ end }}">Drafts</a>
     <a href="/mailboxes/{{ .MailboxID }}/inbox?folder=Trash" class="folder-item {{ if eq .Folder "Trash" }}active{{ end }}">Trash</a>

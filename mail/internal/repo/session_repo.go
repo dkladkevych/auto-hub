@@ -33,7 +33,7 @@ func (r *SessionRepo) Create(ctx context.Context, s *models.Session) error {
 // already expired.
 func (r *SessionRepo) GetByTokenHash(ctx context.Context, hash string) (*models.Session, error) {
 	query := `SELECT id, user_id, session_token_hash, user_agent, ip_address, expires_at, created_at, last_seen_at
-			  FROM sessions WHERE session_token_hash = $1 AND expires_at > datetime('now')`
+			  FROM sessions WHERE session_token_hash = $1 AND expires_at > CURRENT_TIMESTAMP`
 	row := r.db.QueryRowContext(ctx, query, hash)
 	s := &models.Session{}
 	err := row.Scan(&s.ID, &s.UserID, &s.SessionTokenHash, &s.UserAgent, &s.IPAddress, &s.ExpiresAt, &s.CreatedAt, &s.LastSeenAt)
@@ -54,7 +54,7 @@ func (r *SessionRepo) Delete(ctx context.Context, id int) error {
 
 // UpdateLastSeen bumps the last_seen_at timestamp to the current time.
 func (r *SessionRepo) UpdateLastSeen(ctx context.Context, id int) error {
-	_, err := r.db.ExecContext(ctx, `UPDATE sessions SET last_seen_at = datetime('now') WHERE id = $1`, id)
+	_, err := r.db.ExecContext(ctx, `UPDATE sessions SET last_seen_at = CURRENT_TIMESTAMP WHERE id = $1`, id)
 	return err
 }
 
@@ -62,6 +62,6 @@ func (r *SessionRepo) UpdateLastSeen(ctx context.Context, id int) error {
 // This should be run periodically (e.g. via a background goroutine or
 // cron job) to prevent the table from growing indefinitely.
 func (r *SessionRepo) DeleteExpired(ctx context.Context) error {
-	_, err := r.db.ExecContext(ctx, `DELETE FROM sessions WHERE expires_at <= datetime('now')`)
+	_, err := r.db.ExecContext(ctx, `DELETE FROM sessions WHERE expires_at <= CURRENT_TIMESTAMP`)
 	return err
 }

@@ -33,7 +33,8 @@ func (h *UserHandler) New(c *gin.Context) {
 	if u, ok := user.(*models.User); ok && u.Role == "operator" {
 		canSetRole = true
 	}
-	c.HTML(http.StatusOK, "users_new.html", gin.H{
+	c.HTML(http.StatusOK, "users/new.html", gin.H{
+		"CSRFToken": CSRFToken(c),
 		"Title":      "New User",
 		"User":       user,
 		"Domains":    domains,
@@ -59,7 +60,8 @@ func (h *UserHandler) Create(c *gin.Context) {
 		defaultDomain, err := h.domainService.GetDefaultDomain(c.Request.Context())
 		if err != nil {
 			user, _ := c.Get("user")
-			c.HTML(http.StatusBadRequest, "users_new.html", gin.H{
+			c.HTML(http.StatusBadRequest, "users/new.html", gin.H{
+		"CSRFToken": CSRFToken(c),
 				"Title": "New User",
 				"User":  user,
 				"Error": "No domain selected and no default domain configured",
@@ -78,7 +80,8 @@ func (h *UserHandler) Create(c *gin.Context) {
 	if err != nil {
 		domains, _ := h.domainService.ListActive(c.Request.Context())
 		user, _ := c.Get("user")
-		c.HTML(http.StatusBadRequest, "users_new.html", gin.H{
+		c.HTML(http.StatusBadRequest, "users/new.html", gin.H{
+		"CSRFToken": CSRFToken(c),
 			"Title":   "New User",
 			"User":    user,
 			"Domains": domains,

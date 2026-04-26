@@ -620,6 +620,53 @@ body {
     margin-right: 4px;
 }
 
+/* Star button in message list */
+.star-form {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.star-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    line-height: 1;
+    padding: 0;
+    color: #a0aec0;
+    transition: color 0.15s, transform 0.1s;
+}
+
+.star-btn::before {
+    content: "★";
+}
+
+.star-btn:hover {
+    color: #d69e2e;
+    transform: scale(1.15);
+}
+
+.star-btn.starred {
+    color: #d69e2e;
+}
+
+/* Starred text button in message detail */
+.btn.starred {
+    color: #d69e2e;
+    border-color: #d69e2e;
+}
+
+.btn.starred:hover {
+    background: #fffaf0;
+}
+
 /* Message detail */
 .message-detail {
     background: var(--surface);

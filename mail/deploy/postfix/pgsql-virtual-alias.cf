@@ -1,0 +1,7 @@
+# Postfix PostgreSQL map for virtual aliases (optional)
+# Basic identity mapping. Extend later for catch-all or role addresses.
+hosts = localhost
+dbname = autohub_mail
+user = autohub_mail_user
+password = YOUR_DB_PASSWORD
+query = SELECT email FROM mailboxes WHERE email = '%s' AND is_active = 1

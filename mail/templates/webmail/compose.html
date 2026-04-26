@@ -13,7 +13,8 @@
     <div class="alert alert-error">{{ .Error }}</div>
     {{ end }}
 
-    <form method="post" action="/mailboxes/{{ .MailboxID }}/compose" class="compose-form">
+    <form method="post" action="/mailboxes/{{ .MailboxID }}/compose" class="compose-form" enctype="multipart/form-data">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
       <div class="form-group">
         <label>From</label>
         {{ if gt (len .FromOptions) 1 }}
@@ -45,12 +46,35 @@
         <label>Message</label>
         <textarea name="text_body" rows="12" placeholder="Write your message here...">{{ if .Draft }}{{ .Draft.TextBody }}{{ end }}</textarea>
       </div>
+      <div class="form-group">
+        <label>Attachments</label>
+        <input type="file" name="attachments" multiple>
+      </div>
       <input type="hidden" name="html_body" value="">
+      {{ if .InReplyTo }}
+      <input type="hidden" name="in_reply_to" value="{{ .InReplyTo }}">
+      {{ end }}
+      {{ if .DraftID }}
+      <input type="hidden" name="draft_id" value="{{ .DraftID }}">
+      {{ end }}
 
       <div class="form-actions">
         <button type="submit" class="btn btn-primary">Send</button>
         <button type="submit" formaction="/mailboxes/{{ .MailboxID }}/compose/draft" class="btn">Save Draft</button>
       </div>
+
+      {{ if .SendBlocked }}
+      <div class="modal-backdrop" style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:1000;">
+        <div class="modal" style="background:#fff; padding:24px; border-radius:8px; max-width:400px; width:90%; box-shadow:0 4px 16px rgba(0,0,0,0.2);">
+          <h3 style="margin-top:0;">Sending is disabled</h3>
+          <p>You cannot send messages. Please contact your administrator.</p>
+          <div style="display:flex; gap:12px; justify-content:flex-end; margin-top:20px;">
+            <a href="/mailboxes/{{.MailboxID}}/inbox" class="btn">Cancel</a>
+            <button type="submit" class="btn btn-primary" formaction="/mailboxes/{{.MailboxID}}/compose/draft">Save to Drafts</button>
+          </div>
+        </div>
+      </div>
+      {{ end }}
     </form>
   </section>
 </main>

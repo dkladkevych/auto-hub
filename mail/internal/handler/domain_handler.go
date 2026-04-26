@@ -27,7 +27,8 @@ func (h *DomainHandler) List(c *gin.Context) {
 		return
 	}
 	user, _ := c.Get("user")
-	c.HTML(http.StatusOK, "domains_list.html", gin.H{
+	c.HTML(http.StatusOK, "domains/list.html", gin.H{
+		"CSRFToken": CSRFToken(c),
 		"Title":   "Domains",
 		"User":    user,
 		"Domains": domains,
@@ -37,7 +38,8 @@ func (h *DomainHandler) List(c *gin.Context) {
 // New renders the form for adding a new domain.
 func (h *DomainHandler) New(c *gin.Context) {
 	user, _ := c.Get("user")
-	c.HTML(http.StatusOK, "domains_new.html", gin.H{
+	c.HTML(http.StatusOK, "domains/new.html", gin.H{
+		"CSRFToken": CSRFToken(c),
 		"Title": "New Domain",
 		"User":  user,
 	})
@@ -53,7 +55,8 @@ func (h *DomainHandler) Create(c *gin.Context) {
 	_, err := h.domainService.Create(c.Request.Context(), actorID, domain, makeDefault)
 	if err != nil {
 		user, _ := c.Get("user")
-		c.HTML(http.StatusBadRequest, "domains_new.html", gin.H{
+		c.HTML(http.StatusBadRequest, "domains/new.html", gin.H{
+		"CSRFToken": CSRFToken(c),
 			"Title": "New Domain",
 			"User":  user,
 			"Error": err.Error(),

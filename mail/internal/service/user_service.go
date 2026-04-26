@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"auto-hub/mail/internal/maildir"
 	"auto-hub/mail/internal/models"
 	"auto-hub/mail/internal/repo"
 	"auto-hub/mail/internal/utils"
@@ -116,13 +117,19 @@ func (s *UserService) Create(ctx context.Context, actorID int, username, passwor
 		MaildirPath:         maildirPath,
 		ImapLoginEnabled:    true,
 		SmtpLoginEnabled:    true,
-		MailboxPasswordHash: hash, // same as user password
+		MailboxPasswordHash: "",
 		CreatedBy:           &createdBy,
 	}
 
 	if err := s.mailboxRepo.Create(ctx, mailbox); err != nil {
 		_ = s.userRepo.Delete(ctx, user.ID)
 		return nil, nil, fmt.Errorf("failed to create mailbox: %w", err)
+	}
+
+	if err := maildir.Create(mailbox.MaildirPath); err != nil {
+		_ = s.mailboxRepo.Delete(ctx, mailbox.ID)
+		_ = s.userRepo.Delete(ctx, user.ID)
+		return nil, nil, fmt.Errorf("maildir creation failed: %w", err)
 	}
 
 	member := &models.MailboxMember{
@@ -132,17 +139,11 @@ func (s *UserService) Create(ctx context.Context, actorID int, username, passwor
 	}
 	_ = s.memberRepo.Add(ctx, member)
 
-	_ = s.auditRepo.Log(ctx, &models.AuditLog{
-		ActorUserID: &actorID,
-		Action:      "user_created",
-		EntityType:  "user",
-		EntityID:    &user.ID,
-		Payload: map[string]interface{}{
-			"email":     email,
-			"full_name": fullName,
-			"role":      role,
-		},
-	})
+	_ = s.auditRepo.Log(ctx, buildAuditLog(actorID, "user_created", "user", &user.ID, map[string]interface{}{
+		"email":     email,
+		"full_name": fullName,
+		"role":      role,
+	}))
 
 	return user, mailbox, nil
 }
@@ -250,12 +251,9 @@ func (s *UserService) Update(ctx context.Context, actorID int, id int, fullName,
 			if m.Email == user.Email && m.MailboxType == "personal" {
 				m.DisplayName = fullName
 				m.QuotaMb = quotaMb
+				m.IsActive = isActive
 				m.CanReceive = canReceive
 				m.CanSend = canSend
-				if newHash != "" {
-					m.MailboxPasswordHash = newHash
-					_ = s.mailboxRepo.UpdatePassword(ctx, m.ID, newHash)
-				}
 				_ = s.mailboxRepo.Update(ctx, m)
 				_ = s.mailboxRepo.UpdateSettings(ctx, m.ID, canReceive, canSend)
 				break
@@ -271,17 +269,55 @@ func (s *UserService) Update(ctx context.Context, actorID int, id int, fullName,
 		}
 	}
 
-	_ = s.auditRepo.Log(ctx, &models.AuditLog{
-		ActorUserID: &actorID,
-		Action:      "user_updated",
-		EntityType:  "user",
-		EntityID:    &id,
-		Payload: map[string]interface{}{
-			"full_name": fullName,
-			"role":      role,
-			"is_active": isActive,
-		},
-	})
+	_ = s.auditRepo.Log(ctx, buildAuditLog(actorID, "user_updated", "user", &id, map[string]interface{}{
+		"full_name": fullName,
+		"role":      role,
+		"is_active": isActive,
+	}))
+
+	return nil
+}
+
+// UpdateProfile allows a regular user to change their own full name and
+// password.  Role changes are silently ignored.
+func (s *UserService) UpdateProfile(ctx context.Context, userID int, fullName, newPassword string) error {
+	user, err := s.userRepo.GetByID(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return fmt.Errorf("user not found")
+	}
+
+	user.FullName = fullName
+	if err := s.userRepo.Update(ctx, user); err != nil {
+		return err
+	}
+
+	var newHash string
+	if newPassword != "" {
+		h, err := utils.HashPassword(newPassword)
+		if err != nil {
+			return err
+		}
+		newHash = h
+		user.PasswordHash = newHash
+		if err := s.userRepo.UpdatePassword(ctx, userID, newHash); err != nil {
+			return err
+		}
+	}
+
+	mailboxes, err := s.mailboxRepo.List(ctx)
+	if err == nil {
+		for i := range mailboxes {
+			m := &mailboxes[i]
+			if m.Email == user.Email && m.MailboxType == "personal" {
+				m.DisplayName = fullName
+				_ = s.mailboxRepo.Update(ctx, m)
+				break
+			}
+		}
+	}
 
 	return nil
 }
@@ -306,6 +342,7 @@ func (s *UserService) Delete(ctx context.Context, actorID, id int) error {
 		for _, m := range mailboxes {
 			if m.Email == user.Email && m.MailboxType == "personal" {
 				_ = s.mailboxRepo.Delete(ctx, m.ID)
+				_, _ = maildir.SoftDelete(m.MaildirPath)
 				break
 			}
 		}
@@ -315,13 +352,7 @@ func (s *UserService) Delete(ctx context.Context, actorID, id int) error {
 		return err
 	}
 
-	_ = s.auditRepo.Log(ctx, &models.AuditLog{
-		ActorUserID: &actorID,
-		Action:      "user_deleted",
-		EntityType:  "user",
-		EntityID:    &id,
-		Payload:     map[string]interface{}{"email": user.Email},
-	})
+	_ = s.auditRepo.Log(ctx, buildAuditLog(actorID, "user_deleted", "user", &id, map[string]interface{}{"email": user.Email}))
 
 	return nil
 }

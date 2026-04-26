@@ -4,6 +4,7 @@ package mailprovider
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -133,6 +134,36 @@ func (m *MockMailProvider) ensureMailbox(email string) {
 	}
 }
 
+func (m *MockMailProvider) starredCount(mailboxEmail string) int {
+	count := 0
+	for _, msgs := range m.messages[mailboxEmail] {
+		for _, msg := range msgs {
+			if msg.Flagged {
+				count++
+			}
+		}
+	}
+	return count
+}
+
+func (m *MockMailProvider) listStarred(mailboxEmail string) []models.Message {
+	var out []models.Message
+	for folderName, msgs := range m.messages[mailboxEmail] {
+		if folderName == "Trash" {
+			m.expireTrash(mailboxEmail)
+		}
+		for _, msg := range msgs {
+			if msg.Flagged {
+				out = append(out, msg)
+			}
+		}
+	}
+	sort.Slice(out, func(i, j int) bool {
+		return out[i].Date.After(out[j].Date)
+	})
+	return out
+}
+
 // ListFolders returns all folders for the given mailbox email address.
 func (m *MockMailProvider) ListFolders(ctx context.Context, mailboxEmail string) ([]models.Folder, error) {
 	m.mu.Lock()
@@ -140,8 +171,13 @@ func (m *MockMailProvider) ListFolders(ctx context.Context, mailboxEmail string)
 	m.ensureMailbox(mailboxEmail)
 	m.expireTrash(mailboxEmail)
 	folders := m.folders[mailboxEmail]
-	out := make([]models.Folder, len(folders))
-	copy(out, folders)
+	out := make([]models.Folder, 0, len(folders)+1)
+	for _, f := range folders {
+		out = append(out, f)
+		if f.Name == "Inbox" {
+			out = append(out, models.Folder{Name: "Starred", Count: m.starredCount(mailboxEmail)})
+		}
+	}
 	return out, nil
 }
 
@@ -154,9 +190,15 @@ func (m *MockMailProvider) ListMessages(ctx context.Context, mailboxEmail string
 		m.expireTrash(mailboxEmail)
 	}
 	mailboxMsgs := m.messages[mailboxEmail]
-	msgs, ok := mailboxMsgs[folder]
-	if !ok {
-		return nil, nil
+	var msgs []models.Message
+	if folder == "Starred" {
+		msgs = m.listStarred(mailboxEmail)
+	} else {
+		var ok bool
+		msgs, ok = mailboxMsgs[folder]
+		if !ok {
+			return nil, nil
+		}
 	}
 	if offset >= len(msgs) {
 		return nil, nil
@@ -182,6 +224,25 @@ func (m *MockMailProvider) ListMessages(ctx context.Context, mailboxEmail string
 		}
 	}
 	return out, nil
+}
+
+// CountMessages returns the total number of messages in a folder.
+func (m *MockMailProvider) CountMessages(ctx context.Context, mailboxEmail string, folder string) (int, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.ensureMailbox(mailboxEmail)
+	if folder == "Trash" {
+		m.expireTrash(mailboxEmail)
+	}
+	if folder == "Starred" {
+		return m.starredCount(mailboxEmail), nil
+	}
+	mailboxMsgs := m.messages[mailboxEmail]
+	msgs, ok := mailboxMsgs[folder]
+	if !ok {
+		return 0, nil
+	}
+	return len(msgs), nil
 }
 
 // GetMessage returns a single message by its ID within a folder.
@@ -240,6 +301,26 @@ func (m *MockMailProvider) MarkSeen(ctx context.Context, mailboxEmail string, fo
 	for i := range msgs {
 		if msgs[i].ID == messageID {
 			msgs[i].Seen = seen
+			m.updateFolderCounts(mailboxEmail)
+			return nil
+		}
+	}
+	return fmt.Errorf("message not found")
+}
+
+// SetFlagged updates the flagged (starred) state of a message.
+func (m *MockMailProvider) SetFlagged(ctx context.Context, mailboxEmail string, folder string, messageID string, flagged bool) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.ensureMailbox(mailboxEmail)
+	mailboxMsgs := m.messages[mailboxEmail]
+	msgs, ok := mailboxMsgs[folder]
+	if !ok {
+		return fmt.Errorf("folder not found")
+	}
+	for i := range msgs {
+		if msgs[i].ID == messageID {
+			msgs[i].Flagged = flagged
 			m.updateFolderCounts(mailboxEmail)
 			return nil
 		}

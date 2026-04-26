@@ -27,7 +27,7 @@ func (r *UserRepo) Create(ctx context.Context, user *models.User) error {
 			  VALUES ($1, $2, $3, $4, $5, $6)
 			  RETURNING id, created_at, updated_at`
 	return r.db.QueryRowContext(ctx, query,
-		user.Email, user.PasswordHash, user.FullName, user.Role, user.IsActive, user.CreatedBy,
+		user.Email, user.PasswordHash, user.FullName, user.Role, btoi(user.IsActive), user.CreatedBy,
 	).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
 }
 
@@ -106,15 +106,15 @@ func (r *UserRepo) List(ctx context.Context) ([]models.User, error) {
 // is_active).  It does not touch the password — use UpdatePassword for that.
 func (r *UserRepo) Update(ctx context.Context, user *models.User) error {
 	_, err := r.db.ExecContext(ctx,
-		`UPDATE users SET full_name = $1, role = $2, is_active = $3, updated_at = datetime('now') WHERE id = $4`,
-		user.FullName, user.Role, user.IsActive, user.ID)
+		`UPDATE users SET full_name = $1, role = $2, is_active = $3, updated_at = CURRENT_TIMESTAMP WHERE id = $4`,
+		user.FullName, user.Role, btoi(user.IsActive), user.ID)
 	return err
 }
 
 // UpdatePassword replaces the password_hash for a given user.
 func (r *UserRepo) UpdatePassword(ctx context.Context, id int, hash string) error {
 	_, err := r.db.ExecContext(ctx,
-		`UPDATE users SET password_hash = $1, updated_at = datetime('now') WHERE id = $2`,
+		`UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
 		hash, id)
 	return err
 }

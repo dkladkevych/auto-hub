@@ -1,0 +1,7 @@
+# Postfix PostgreSQL map for virtual mailbox domains
+# Checks whether a domain exists and is active in the auto-hub database.
+hosts = localhost
+dbname = autohub_mail
+user = autohub_mail_user
+password = YOUR_DB_PASSWORD
+query = SELECT 1 FROM domains WHERE domain = '%s' AND is_active = 1

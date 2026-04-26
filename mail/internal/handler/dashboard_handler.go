@@ -20,7 +20,8 @@ func NewDashboardHandler() *DashboardHandler {
 func (h *DashboardHandler) Index(c *gin.Context) {
 	userVal, _ := c.Get("user")
 	if user, ok := userVal.(*models.User); ok && user.Role == "operator" {
-		c.HTML(http.StatusOK, "dashboard.html", gin.H{
+		c.HTML(http.StatusOK, "dashboard/dashboard.html", gin.H{
+		"CSRFToken": CSRFToken(c),
 			"Title": "Dashboard",
 			"User":  user,
 		})

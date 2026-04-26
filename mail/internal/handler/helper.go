@@ -16,3 +16,13 @@ func actorFromContext(c *gin.Context) (actorID int, actorRole string) {
 	}
 	return 0, ""
 }
+
+// CSRFToken returns the current CSRF token stored in the Gin context by the
+// middleware.  Handlers should include this value in every HTML form.
+func CSRFToken(c *gin.Context) string {
+	tok, _ := c.Get("csrf_token")
+	if s, ok := tok.(string); ok {
+		return s
+	}
+	return ""
+}

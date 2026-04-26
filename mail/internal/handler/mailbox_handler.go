@@ -26,9 +26,28 @@ func NewMailboxHandler(mailboxService *service.MailboxService, userService *serv
 	}
 }
 
-// List renders the mailbox list page. System mailboxes are hidden from non-operators.
+// List renders the mailbox list page with filters, search and pagination.
 func (h *MailboxHandler) List(c *gin.Context) {
-	mailboxes, err := h.mailboxService.List(c.Request.Context())
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	if page < 1 {
+		page = 1
+	}
+	perPage := 20
+
+	filterType := c.Query("type")
+	status := c.Query("status")
+	search := c.Query("search")
+
+	var active *bool
+	if status == "active" {
+		v := true
+		active = &v
+	} else if status == "inactive" {
+		v := false
+		active = &v
+	}
+
+	mailboxes, total, err := h.mailboxService.ListFilteredPaginated(c.Request.Context(), filterType, active, search, page, perPage)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Error: "+err.Error())
 		return
@@ -36,18 +55,49 @@ func (h *MailboxHandler) List(c *gin.Context) {
 	currentUser, _ := c.Get("user")
 	u, _ := currentUser.(*models.User)
 
+	// Non-operators never see system mailboxes.
+	// For personal mailboxes reflect the user status so that deactivating a
+	// user immediately shows as inactive in the list without needing a manual
+	// mailbox re-save.
+	effectiveActive := make(map[int]bool)
 	var filtered []models.Mailbox
 	for _, m := range mailboxes {
 		if m.MailboxType == "system" && (u == nil || u.Role != "operator") {
 			continue
 		}
+		if m.MailboxType == "personal" {
+			usr, _ := h.userService.GetByEmail(c.Request.Context(), m.Email)
+			if usr != nil {
+				effectiveActive[m.ID] = usr.IsActive
+			} else {
+				effectiveActive[m.ID] = m.IsActive
+			}
+		} else {
+			effectiveActive[m.ID] = m.IsActive
+		}
 		filtered = append(filtered, m)
 	}
 
-	c.HTML(http.StatusOK, "mailboxes_list.html", gin.H{
-		"Title":     "Mailboxes",
-		"User":      currentUser,
-		"Mailboxes": filtered,
+	totalPages := (total + perPage - 1) / perPage
+	if totalPages < 1 {
+		totalPages = 1
+	}
+
+	c.HTML(http.StatusOK, "mailboxes/list.html", gin.H{
+		"CSRFToken": CSRFToken(c),
+		"Title":         "Mailboxes",
+		"User":          currentUser,
+		"Mailboxes":     filtered,
+		"EffectiveActive": effectiveActive,
+		"Page":          page,
+		"TotalPages":    totalPages,
+		"HasPrev":       page > 1,
+		"HasNext":       page < totalPages,
+		"PrevPage":      page - 1,
+		"NextPage":      page + 1,
+		"FilterType":    filterType,
+		"FilterStatus":  status,
+		"Search":        search,
 	})
 }
 
@@ -63,7 +113,8 @@ func (h *MailboxHandler) New(c *gin.Context) {
 	if preselectType != "shared" && preselectType != "system" {
 		preselectType = "shared"
 	}
-	c.HTML(http.StatusOK, "mailboxes_new.html", gin.H{
+	c.HTML(http.StatusOK, "mailboxes/new.html", gin.H{
+		"CSRFToken": CSRFToken(c),
 		"Title":            "New Mailbox",
 		"User":             user,
 		"Domains":          domains,
@@ -78,6 +129,9 @@ func (h *MailboxHandler) Create(c *gin.Context) {
 	domain := c.PostForm("domain")
 	displayName := c.PostForm("display_name")
 	mailboxType := c.PostForm("mailbox_type")
+	if mailboxType == "" {
+		mailboxType = "shared"
+	}
 	canReceive := c.PostForm("can_receive") == "on"
 	canSend := c.PostForm("can_send") == "on"
 	quotaMb, _ := strconv.Atoi(c.PostForm("quota_mb"))
@@ -91,7 +145,8 @@ func (h *MailboxHandler) Create(c *gin.Context) {
 		if err != nil {
 			domains, _ := h.domainService.ListActive(c.Request.Context())
 			user, _ := c.Get("user")
-			c.HTML(http.StatusBadRequest, "mailboxes_new.html", gin.H{
+			c.HTML(http.StatusBadRequest, "mailboxes/new.html", gin.H{
+		"CSRFToken": CSRFToken(c),
 				"Title":   "New Mailbox",
 				"User":    user,
 				"Domains": domains,
@@ -111,7 +166,8 @@ func (h *MailboxHandler) Create(c *gin.Context) {
 	if err != nil {
 		domains, _ := h.domainService.ListActive(c.Request.Context())
 		user, _ := c.Get("user")
-		c.HTML(http.StatusBadRequest, "mailboxes_new.html", gin.H{
+		c.HTML(http.StatusBadRequest, "mailboxes/new.html", gin.H{
+		"CSRFToken": CSRFToken(c),
 			"Title":   "New Mailbox",
 			"User":    user,
 			"Domains": domains,
@@ -150,7 +206,8 @@ func (h *MailboxHandler) Detail(c *gin.Context) {
 		canSetRole = true
 	}
 
-	c.HTML(http.StatusOK, "mailboxes_detail.html", gin.H{
+	c.HTML(http.StatusOK, "mailboxes/detail.html", gin.H{
+		"CSRFToken": CSRFToken(c),
 		"Title":      m.Email,
 		"User":       currentUser,
 		"Mailbox":    m,
@@ -181,7 +238,7 @@ func (h *MailboxHandler) Update(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/mailboxes/"+strconv.Itoa(id))
 }
 
-// Delete removes a mailbox.
+// Delete soft-deletes a mailbox.
 func (h *MailboxHandler) Delete(c *gin.Context) {
 	id, _ := strconv.Atoi(c.Param("id"))
 
@@ -193,6 +250,20 @@ func (h *MailboxHandler) Delete(c *gin.Context) {
 	}
 
 	c.Redirect(http.StatusFound, "/mailboxes")
+}
+
+// Reactivate restores a soft-deleted mailbox.
+func (h *MailboxHandler) Reactivate(c *gin.Context) {
+	id, _ := strconv.Atoi(c.Param("id"))
+
+	actorID, _ := actorFromContext(c)
+
+	if err := h.mailboxService.Reactivate(c.Request.Context(), actorID, id); err != nil {
+		c.String(http.StatusBadRequest, err.Error())
+		return
+	}
+
+	c.Redirect(http.StatusFound, "/mailboxes/"+strconv.Itoa(id))
 }
 
 // AddMember adds a user to a mailbox.

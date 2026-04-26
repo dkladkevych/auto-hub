@@ -3,7 +3,7 @@
 {{ template "nav" . }}
 <main class="container">
 <div class="page-header">
-    <h1>{{ .Mailbox.Email }}</h1>
+    <h1>{{ .Mailbox.Email }}{{ if not .Mailbox.IsActive }} <span class="pill pill-inactive">Inactive</span>{{ end }}</h1>
     <div>
         {{ if eq .User.Role "operator" }}
         <a href="/mailboxes/{{ .Mailbox.ID }}/inbox" class="btn btn-primary">Open Inbox</a>
@@ -17,6 +17,8 @@
     <button class="tab-btn" data-tab="edit">Edit</button>
     {{ if ne .Mailbox.MailboxType "personal" }}
     <button class="tab-btn" data-tab="settings">Settings</button>
+    {{ end }}
+    {{ if eq .Mailbox.MailboxType "shared" }}
     <button class="tab-btn" data-tab="members">Members</button>
     {{ end }}
     <button class="tab-btn" data-tab="danger">Danger</button>
@@ -43,6 +45,14 @@
                 <dt>Account Status</dt>
                 <dd>
                     {{ if .EditUser.IsActive }}
+                    <span class="pill pill-active">Active</span>
+                    {{ else }}
+                    <span class="pill pill-inactive">Inactive</span>
+                    {{ end }}
+                </dd>
+                <dt>Mailbox Status</dt>
+                <dd>
+                    {{ if .Mailbox.IsActive }}
                     <span class="pill pill-active">Active</span>
                     {{ else }}
                     <span class="pill pill-inactive">Inactive</span>
@@ -77,6 +87,7 @@
     <div class="detail-card" style="max-width: 500px;">
         <h2>Edit User & Mailbox</h2>
         <form method="post" action="/users/{{ .EditUser.ID }}" class="form-grid">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
             <div class="form-group">
                 <label>Full Name</label>
                 <input type="text" name="full_name" value="{{ .EditUser.FullName }}" required>
@@ -118,6 +129,7 @@
     <div class="detail-card" style="max-width: 500px;">
         <h2>Edit Mailbox</h2>
         <form method="post" action="/mailboxes/{{ .Mailbox.ID }}" class="form-grid">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
             <div class="form-group">
                 <label>Display Name</label>
                 <input type="text" name="display_name" value="{{ .Mailbox.DisplayName }}">
@@ -142,6 +154,7 @@
     <div class="detail-card" style="max-width: 500px;">
         <h2>Edit Mailbox</h2>
         <form method="post" action="/mailboxes/{{ .Mailbox.ID }}" class="form-grid">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
             <div class="form-group">
                 <label>Display Name</label>
                 <input type="text" name="display_name" value="{{ .Mailbox.DisplayName }}">
@@ -174,6 +187,7 @@
     <div class="detail-card" style="max-width: 500px;">
         <h2>Mailbox Settings</h2>
         <form method="post" action="/mailboxes/{{ .Mailbox.ID }}/settings" class="form-grid">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
             <div class="form-group form-check">
                 <label><input type="checkbox" name="can_receive" {{ if .Mailbox.CanReceive }}checked{{ end }}> Can Receive emails</label>
             </div>
@@ -187,6 +201,7 @@
     </div>
 </div>
 
+{{ if eq .Mailbox.MailboxType "shared" }}
 <div id="members" class="tab-panel">
     <div class="detail-grid">
         <div class="detail-card">
@@ -201,12 +216,14 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {{ $csrf := $.CSRFToken }}
                     {{ range .Members }}
                     <tr>
                         <td>{{ .User.FullName }} <span style="color: var(--text-muted); font-size: 0.85rem;">({{ .User.Email }})</span></td>
                         <td><span class="pill pill-{{ .AccessRole }}">{{ .AccessRole }}</span></td>
                         <td>
                             <form method="post" action="/mailboxes/{{ $.Mailbox.ID }}/members/{{ .ID }}/delete" class="inline-form" onsubmit="return confirm('Remove {{ .User.FullName }}?');">
+    <input type="hidden" name="_csrf" value="{{$csrf}}">
                                 <button type="submit" class="btn btn-sm btn-danger">Remove</button>
                             </form>
                         </td>
@@ -222,6 +239,7 @@
         <div class="detail-card">
             <h2>Add Member</h2>
             <form method="post" action="/mailboxes/{{ .Mailbox.ID }}/members" class="form-grid">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
                 <div class="form-group">
                     <label>User</label>
                     <select name="user_id" required>
@@ -256,15 +274,18 @@
             {{ if eq .Mailbox.MailboxType "personal" }}
             {{ if .EditUser }}
             <form method="post" action="/users/{{ .EditUser.ID }}/delete" class="inline-form" onsubmit="return confirm('Delete user {{ .Mailbox.Email }} and their mailbox? This cannot be undone.');">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
                 <button type="submit" class="btn btn-danger">Delete User & Mailbox</button>
             </form>
             {{ else }}
             <form method="post" action="/mailboxes/{{ .Mailbox.ID }}/delete" class="inline-form" onsubmit="return confirm('Delete mailbox {{ .Mailbox.Email }}? This cannot be undone.');">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
                 <button type="submit" class="btn btn-danger">Delete Mailbox</button>
             </form>
             {{ end }}
             {{ else }}
             <form method="post" action="/mailboxes/{{ .Mailbox.ID }}/delete" class="inline-form" onsubmit="return confirm('Delete mailbox {{ .Mailbox.Email }}? This cannot be undone.');">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
                 <button type="submit" class="btn btn-danger">Delete Mailbox</button>
             </form>
             {{ end }}

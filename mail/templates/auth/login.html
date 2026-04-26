@@ -7,6 +7,7 @@
     <div class="alert alert-error">{{ .Error }}</div>
     {{ end }}
     <form method="post" action="/login">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
         <div class="form-group">
             <label>Username</label>
             <input type="text" name="username" required autofocus placeholder="admin">

@@ -14,10 +14,18 @@ import (
 // AuthRequired ensures the request carries a valid user session cookie.
 // On success it sets "session", "user", and "user_role" in the Gin context.
 // On failure it redirects to /login and aborts the request.
-func AuthRequired(authService *service.AuthService) gin.HandlerFunc {
+func AuthRequired(authService *service.AuthService, sessionSecret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token, err := c.Cookie("session_token")
+		signed, err := c.Cookie("session_token")
 		if err != nil {
+			c.Redirect(http.StatusFound, "/login")
+			c.Abort()
+			return
+		}
+
+		token, ok := utils.VerifySignedToken(signed, sessionSecret)
+		if !ok {
+			c.SetCookie("session_token", "", -1, "/", "", false, true)
 			c.Redirect(http.StatusFound, "/login")
 			c.Abort()
 			return
@@ -44,7 +52,7 @@ func AuthRequired(authService *service.AuthService) gin.HandlerFunc {
 // When the operator cookie is present and valid, a synthetic User with
 // Role="operator" is injected into the context so that downstream handlers
 // do not need special-case logic.
-func AnyAuthRequired(authService *service.AuthService, operatorSecret string) gin.HandlerFunc {
+func AnyAuthRequired(authService *service.AuthService, sessionSecret, operatorSecret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Check operator cookie first
 		opToken, err := c.Cookie("operator_auth")
@@ -63,8 +71,16 @@ func AnyAuthRequired(authService *service.AuthService, operatorSecret string) gi
 		}
 
 		// Fall back to normal session auth
-		token, err := c.Cookie("session_token")
+		signed, err := c.Cookie("session_token")
 		if err != nil {
+			c.Redirect(http.StatusFound, "/login")
+			c.Abort()
+			return
+		}
+
+		token, ok := utils.VerifySignedToken(signed, sessionSecret)
+		if !ok {
+			c.SetCookie("session_token", "", -1, "/", "", false, true)
 			c.Redirect(http.StatusFound, "/login")
 			c.Abort()
 			return

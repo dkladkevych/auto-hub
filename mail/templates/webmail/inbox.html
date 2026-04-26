@@ -1,0 +1,70 @@
+{{ template "head" . }}
+<body>
+{{ template "nav" . }}
+<main class="webmail-layout">
+  {{ template "webmail_sidebar" . }}
+
+  <section class="webmail-content">
+    <div class="content-header">
+      <h1>{{ .Folder }}</h1>
+      {{ if eq .Folder "Trash" }}
+      <form method="post" action="/mailboxes/{{ .MailboxID }}/empty-trash" class="inline-form" onsubmit="return confirm('Permanently delete all messages in Trash?');">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+        <button type="submit" class="btn btn-danger">Empty Trash</button>
+      </form>
+      {{ end }}
+    </div>
+
+    {{ if .Messages }}
+    <div class="message-list">
+      {{ $csrf := .CSRFToken }}
+      {{ range .Messages }}
+      <div class="message-row-wrapper" style="position:relative;">
+        <a href="/mailboxes/{{ $.MailboxID }}/messages/{{ .ID }}?folder={{ $.Folder }}" class="message-row {{ if not .Seen }}unseen{{ end }}">
+          <div class="message-meta">
+            <span class="message-from">{{ .From }}</span>
+            <span class="message-date">{{ .Date.Format "Jan 02, 15:04" }}</span>
+          </div>
+          <div class="message-subject">
+            {{ if .Answered }}<span class="answered">↵</span>{{ end }}
+            {{ if .Subject }}{{ .Subject }}{{ else }}<em>(no subject)</em>{{ end }}
+            {{ if eq $.Folder "Trash" }}
+            <span class="trash-ttl">{{ .TrashDaysLeft }} days left</span>
+            {{ end }}
+          </div>
+          <div class="message-snippet">{{ .Snippet }}</div>
+        </a>
+        <form method="post" action="/mailboxes/{{ $.MailboxID }}/messages/{{ .ID }}/flag" class="inline-form star-form">
+    <input type="hidden" name="_csrf" value="{{$csrf}}">
+          <input type="hidden" name="folder" value="{{ $.Folder }}">
+          <input type="hidden" name="flagged" value="{{ if .Flagged }}false{{ else }}true{{ end }}">
+          <button type="submit" class="star-btn {{ if .Flagged }}starred{{ end }}" title="{{ if .Flagged }}Unstar{{ else }}Star{{ end }}"></button>
+        </form>
+      </div>
+      {{ end }}
+    </div>
+    {{ else }}
+    <div class="empty-state">
+      <p>No messages in {{ .Folder }}.</p>
+    </div>
+    {{ end }}
+
+    {{ if gt .TotalPages 1 }}
+    <div class="pagination" style="display:flex; gap:8px; justify-content:center; margin-top:24px;">
+      {{ if .HasPrev }}
+      <a href="/mailboxes/{{ .MailboxID }}/inbox?folder={{ .Folder }}&page={{ .PrevPage }}" class="btn btn-sm">← Prev</a>
+      {{ else }}
+      <span class="btn btn-sm" style="opacity:0.5; cursor:not-allowed;">← Prev</span>
+      {{ end }}
+      <span style="font-size:0.9rem; color:var(--text-muted); align-self:center;">Page {{ .Page }} of {{ .TotalPages }}</span>
+      {{ if .HasNext }}
+      <a href="/mailboxes/{{ .MailboxID }}/inbox?folder={{ .Folder }}&page={{ .NextPage }}" class="btn btn-sm">Next →</a>
+      {{ else }}
+      <span class="btn btn-sm" style="opacity:0.5; cursor:not-allowed;">Next →</span>
+      {{ end }}
+    </div>
+    {{ end }}
+  </section>
+</main>
+</body>
+</html>

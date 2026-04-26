@@ -7,10 +7,6 @@
 
 {{ if eq .User.Role "operator" }}
 <div class="stats-grid">
-    <a href="/users" class="stat-card">
-        <h3>Users</h3>
-        <p>Manage team members</p>
-    </a>
     <a href="/mailboxes" class="stat-card">
         <h3>Mailboxes</h3>
         <p>Manage email addresses</p>
@@ -22,10 +18,6 @@
 </div>
 {{ else if eq .User.Role "admin" }}
 <div class="stats-grid">
-    <a href="/users" class="stat-card">
-        <h3>Users</h3>
-        <p>Manage team members</p>
-    </a>
     <a href="/mailboxes" class="stat-card">
         <h3>Mailboxes</h3>
         <p>Manage email addresses</p>

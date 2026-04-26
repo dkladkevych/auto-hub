@@ -17,6 +17,9 @@ type MailProvider interface {
 	// ListMessages returns messages in a folder with simple pagination.
 	ListMessages(ctx context.Context, mailboxEmail string, folder string, limit, offset int) ([]models.Message, error)
 
+	// CountMessages returns the total number of messages in a folder.
+	CountMessages(ctx context.Context, mailboxEmail string, folder string) (int, error)
+
 	// GetMessage returns a single message by its ID within a folder.
 	GetMessage(ctx context.Context, mailboxEmail string, folder string, messageID string) (*models.Message, error)
 
@@ -25,6 +28,8 @@ type MailProvider interface {
 
 	// MarkSeen updates the \\Seen flag for a message.
 	MarkSeen(ctx context.Context, mailboxEmail string, folder string, messageID string, seen bool) error
+	// SetFlagged updates the flagged (starred) state of a message.
+	SetFlagged(ctx context.Context, mailboxEmail string, folder string, messageID string, flagged bool) error
 
 	// DeleteMessage removes a message from a folder.
 	DeleteMessage(ctx context.Context, mailboxEmail string, folder string, messageID string) error

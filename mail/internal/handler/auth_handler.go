@@ -9,6 +9,7 @@ import (
 	"auto-hub/mail/internal/config"
 	"auto-hub/mail/internal/models"
 	"auto-hub/mail/internal/service"
+	"auto-hub/mail/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -29,7 +30,8 @@ func NewAuthHandler(authService *service.AuthService, domainService *service.Dom
 // LoginPage renders the login form with a list of active domains.
 func (h *AuthHandler) LoginPage(c *gin.Context) {
 	domains, _ := h.domainService.ListActive(c.Request.Context())
-	c.HTML(http.StatusOK, "login.html", gin.H{
+	c.HTML(http.StatusOK, "auth/login.html", gin.H{
+		"CSRFToken": CSRFToken(c),
 		"Title":   "Login",
 		"Domains": domains,
 	})
@@ -46,7 +48,8 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		defaultDomain, err := h.domainService.GetDefaultDomain(c.Request.Context())
 		if err != nil {
 			domains, _ := h.domainService.ListActive(c.Request.Context())
-			c.HTML(http.StatusUnauthorized, "login.html", gin.H{
+			c.HTML(http.StatusUnauthorized, "auth/login.html", gin.H{
+		"CSRFToken": CSRFToken(c),
 				"Title":   "Login",
 				"Domains": domains,
 				"Error":   "No domain selected and no default domain configured",
@@ -61,7 +64,8 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	_, token, err := h.authService.Login(c.Request.Context(), email, password, c.Request.UserAgent(), c.ClientIP())
 	if err != nil {
 		domains, _ := h.domainService.ListActive(c.Request.Context())
-		c.HTML(http.StatusUnauthorized, "login.html", gin.H{
+		c.HTML(http.StatusUnauthorized, "auth/login.html", gin.H{
+		"CSRFToken": CSRFToken(c),
 			"Title":   "Login",
 			"Domains": domains,
 			"Error":   "Invalid username or password",
@@ -69,7 +73,10 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	c.SetCookie("session_token", token, int(h.cfg.SessionMaxAge.Seconds()), "/", "", false, true)
+	// Sign the token with HMAC so the cookie cannot be forged.
+	signed := token + "." + utils.SignToken(token, h.cfg.SessionSecret)
+	c.SetSameSite(h.cfg.SessionCookieSameSite)
+	c.SetCookie("session_token", signed, int(h.cfg.SessionMaxAge.Seconds()), "/", "", h.cfg.SessionCookieSecure, true)
 	c.Redirect(http.StatusFound, "/")
 }
 
@@ -82,6 +89,7 @@ func (h *AuthHandler) Logout(c *gin.Context) {
 		}
 	}
 
-	c.SetCookie("session_token", "", -1, "/", "", false, true)
+	c.SetSameSite(h.cfg.SessionCookieSameSite)
+	c.SetCookie("session_token", "", -1, "/", "", h.cfg.SessionCookieSecure, true)
 	c.Redirect(http.StatusFound, "/login")
 }

@@ -11,6 +11,8 @@ A lightweight web control panel for managing mail users, domains, shared mailbox
 - **Webmail UI** with folder browsing, message reading, compose and trash lifecycle
 - **Audit logging** for every mutating action
 - **Session-based authentication** with SHA-256 hashed session tokens stored in SQLite
+- **SMTP outbound** for external recipients via local relay (Postfix on 127.0.0.1:25)
+- **In-memory rate limiting** on login, operator login and compose endpoints
 - **Mock mail provider** for instant UI testing (swap for IMAP/SMTP later without touching handlers)
 
 ## Tech Stack
@@ -102,7 +104,9 @@ http://localhost:8080
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `DATABASE_PATH` | `mail.db` | SQLite file path |
+| `DB_DRIVER` | `sqlite` | Database driver: `sqlite` or `postgres` |
+| `DATABASE_PATH` | `data/mail.db` | SQLite file path |
+| `DATABASE_URL` | *(empty)* | PostgreSQL connection string |
 | `SERVER_PORT` | `8080` | HTTP port |
 | `SESSION_SECRET` | `change-me-in-production` | Secret for cookie session tokens |
 | `SESSION_MAX_AGE_MINUTES` | `1440` | Session lifetime (24 h) |
@@ -111,6 +115,26 @@ http://localhost:8080
 | `OPERATOR_PASSWORD` | *(empty)* | Plain-text operator password (dev only) |
 | `OPERATOR_PASSWORD_HASH` | *(empty)* | bcrypt hash of operator password (production) |
 | `OPERATOR_SESSION_SECRET` | `operator-change-me` | HMAC secret for operator cookies |
+| `OPERATOR_LOGIN_PATH` | `/operator/login` | URL path for operator login (hide from public) |
+| `OPERATOR_LOGOUT_PATH` | `{LOGIN_PATH}/logout` | URL path for operator logout |
+| `SMTP_ENABLED` | `false` | Enable external SMTP delivery via local relay |
+| `SMTP_HOST` | `127.0.0.1` | SMTP relay host |
+| `SMTP_PORT` | `25` | SMTP relay port |
+| `SMTP_REQUIRE_TLS` | `false` | Require TLS for SMTP |
+| `IMAP_HOST` | `127.0.0.1` | IMAP server host |
+| `IMAP_PORT` | `143` | IMAP port (143 or 993) |
+| `IMAP_USE_SSL` | `false` | `true` = immediate TLS, `false` = STARTTLS |
+| `IMAP_SKIP_TLS_VERIFY` | `true` | Skip TLS cert verification (localhost) |
+| `IMAP_MASTER_PASSWORD` | *(empty)* | Master password for IMAP login |
+| `RATE_LIMIT_ENABLED` | `true` | Enable in-memory rate limiting |
+| `LOGIN_RATE_LIMIT_MAX` | `5` | Max login attempts per IP |
+| `LOGIN_RATE_LIMIT_WINDOW_MINUTES` | `10` | Login rate-limit window |
+| `OPERATOR_RATE_LIMIT_MAX` | `3` | Max operator login attempts per IP |
+| `OPERATOR_RATE_LIMIT_WINDOW_MINUTES` | `15` | Operator login rate-limit window |
+| `SEND_RATE_LIMIT_MAX` | `20` | Max outgoing sends per user per window |
+| `SEND_RATE_LIMIT_WINDOW_MINUTES` | `10` | Send rate-limit window |
+| `DRAFT_RATE_LIMIT_MAX` | `60` | Max draft saves per user per window |
+| `DRAFT_RATE_LIMIT_WINDOW_MINUTES` | `10` | Draft rate-limit window |
 
 ## Deployment Notes
 
@@ -166,15 +190,47 @@ server {
 - [ ] Run behind HTTPS
 - [ ] Restrict file permissions on the SQLite database (`chmod 600 mail.db`)
 - [ ] Back up `mail.db` regularly
+- [ ] Change `OPERATOR_LOGIN_PATH` to something non-obvious
+- [ ] Review rate-limit settings for your traffic volume
 
 ## Switching to a Real Mail Backend
 
-The `mailprovider.MailProvider` interface abstracts all mail storage / transport. The current implementation (`MockMailProvider`) keeps everything in memory for rapid UI development. To connect to a real Postfix/Dovecot stack:
+The `mailprovider.MailProvider` interface abstracts all mail storage / transport. The current default implementation (`DevDBMailProvider`) stores messages in SQLite and can already relay external mail via a local SMTP server (e.g. Postfix on `127.0.0.1:25`).
 
-1. Implement `MailProvider` with IMAP (read) and SMTP (send) clients.
+### IMAP Provider
+
+Set `MAIL_PROVIDER=imap` and configure the IMAP variables in `.env`. The IMAP provider authenticates with a **master password** so that the app never needs to store plaintext mailbox passwords.
+
+#### Dovecot master user setup (one-time)
+
+```conf
+# /etc/dovecot/conf.d/10-auth.conf
+auth_master_user_separator = *
+
+# /etc/dovecot/conf.d/auth-master.conf.ext
+passdb {
+  driver = passwd-file
+  args = /etc/dovecot/master-users
+}
+```
+
+Create `/etc/dovecot/master-users`:
+```
+master:{PLAIN}your-imap-master-password
+```
+
+Then any mailbox can be opened with login `user@auto-hub.ca*master` and the master password. The app automatically appends `*master` internally when `IMAP_MASTER_PASSWORD` is set.
+
+> **Note:** `IMAP_SKIP_TLS_VERIFY=true` is useful for local Dovecot with a self-signed certificate.
+
+### Custom IMAP/SMTP stack
+
+To connect to a remote IMAP/SMTP stack instead of the built-in providers:
+
+1. Implement `MailProvider` with your own IMAP/SMTP clients.
 2. Swap the provider in `cmd/server/main.go`:
    ```go
-   realProvider := mailprovider.NewIMAPProvider(/* ... */)
+   realProvider := mailprovider.NewIMAPMailProvider(cfg, mailboxRepo, smtpSender)
    webmailService := service.NewWebmailService(realProvider, mailboxRepo, memberRepo)
    ```
 3. Handlers, templates and services remain unchanged.
@@ -182,7 +238,8 @@ The `mailprovider.MailProvider` interface abstracts all mail storage / transport
 ## Roadmap / TODO
 
 - [ ] Background goroutine for expired session cleanup
-- [ ] IMAP / SMTP provider implementation
+- [x] SMTP outbound for external recipients (dev_db provider)
+- [ ] IMAP provider implementation
 - [ ] Mailbox quota usage display (Dovecot dict or IMAP QUOTA)
 - [ ] 2FA for operator login
 

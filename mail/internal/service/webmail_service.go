@@ -42,6 +42,9 @@ func (s *WebmailService) CanAccess(ctx context.Context, user *models.User, mailb
 	if m == nil {
 		return false, nil
 	}
+	if !m.IsActive {
+		return false, nil
+	}
 	if m.Email == user.Email {
 		return true, nil
 	}
@@ -52,91 +55,122 @@ func (s *WebmailService) CanAccess(ctx context.Context, user *models.User, mailb
 	return exists, nil
 }
 
-// mailboxEmail resolves a mailbox ID to its email address.  This is the
-// bridge between the integer IDs used in the UI and the string identifiers
-// expected by MailProvider.
-func (s *WebmailService) mailboxEmail(ctx context.Context, mailboxID int) (string, error) {
+// requireMailbox fetches the mailbox and checks it is active.
+func (s *WebmailService) requireMailbox(ctx context.Context, mailboxID int) (*models.Mailbox, error) {
 	m, err := s.mailboxRepo.GetByID(ctx, mailboxID)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	if m == nil {
-		return "", fmt.Errorf("mailbox not found")
+		return nil, fmt.Errorf("mailbox not found")
 	}
-	return m.Email, nil
+	if !m.IsActive {
+		return nil, fmt.Errorf("mailbox is inactive")
+	}
+	return m, nil
+}
+
+// GetMailboxByID returns a mailbox by its database ID.
+func (s *WebmailService) GetMailboxByID(ctx context.Context, mailboxID int) (*models.Mailbox, error) {
+	m, err := s.mailboxRepo.GetByID(ctx, mailboxID)
+	if err != nil {
+		return nil, err
+	}
+	if m == nil {
+		return nil, fmt.Errorf("mailbox not found")
+	}
+	return m, nil
 }
 
 // ListFolders returns the folder list (Inbox, Sent, Drafts, Trash, etc.)
 // for a mailbox.
 func (s *WebmailService) ListFolders(ctx context.Context, mailboxID int) ([]models.Folder, error) {
-	email, err := s.mailboxEmail(ctx, mailboxID)
+	m, err := s.requireMailbox(ctx, mailboxID)
 	if err != nil {
 		return nil, err
 	}
-	return s.provider.ListFolders(ctx, email)
+	return s.provider.ListFolders(ctx, m.Email)
 }
 
 // ListMessages returns a paginated slice of messages inside a folder.
 func (s *WebmailService) ListMessages(ctx context.Context, mailboxID int, folder string, limit, offset int) ([]models.Message, error) {
-	email, err := s.mailboxEmail(ctx, mailboxID)
+	m, err := s.requireMailbox(ctx, mailboxID)
 	if err != nil {
 		return nil, err
 	}
-	return s.provider.ListMessages(ctx, email, folder, limit, offset)
+	return s.provider.ListMessages(ctx, m.Email, folder, limit, offset)
+}
+
+// CountMessages returns the total number of messages in a folder.
+func (s *WebmailService) CountMessages(ctx context.Context, mailboxID int, folder string) (int, error) {
+	m, err := s.requireMailbox(ctx, mailboxID)
+	if err != nil {
+		return 0, err
+	}
+	return s.provider.CountMessages(ctx, m.Email, folder)
 }
 
 // GetMessage retrieves a single message by its provider-specific ID.
 func (s *WebmailService) GetMessage(ctx context.Context, mailboxID int, folder, messageID string) (*models.Message, error) {
-	email, err := s.mailboxEmail(ctx, mailboxID)
+	m, err := s.requireMailbox(ctx, mailboxID)
 	if err != nil {
 		return nil, err
 	}
-	return s.provider.GetMessage(ctx, email, folder, messageID)
+	return s.provider.GetMessage(ctx, m.Email, folder, messageID)
 }
 
 // SendMessage dispatches an outgoing message through the provider.
 func (s *WebmailService) SendMessage(ctx context.Context, mailboxID int, msg *models.OutgoingMessage) error {
-	email, err := s.mailboxEmail(ctx, mailboxID)
+	m, err := s.requireMailbox(ctx, mailboxID)
 	if err != nil {
 		return err
 	}
-	return s.provider.SendMessage(ctx, email, msg)
+	return s.provider.SendMessage(ctx, m.Email, msg)
 }
 
 // MarkSeen toggles the \\Seen flag for a single message.
 func (s *WebmailService) MarkSeen(ctx context.Context, mailboxID int, folder, messageID string, seen bool) error {
-	email, err := s.mailboxEmail(ctx, mailboxID)
+	m, err := s.requireMailbox(ctx, mailboxID)
 	if err != nil {
 		return err
 	}
-	return s.provider.MarkSeen(ctx, email, folder, messageID, seen)
+	return s.provider.MarkSeen(ctx, m.Email, folder, messageID, seen)
+}
+
+// SetFlagged updates the starred state of a message.
+func (s *WebmailService) SetFlagged(ctx context.Context, mailboxID int, folder, messageID string, flagged bool) error {
+	m, err := s.requireMailbox(ctx, mailboxID)
+	if err != nil {
+		return err
+	}
+	return s.provider.SetFlagged(ctx, m.Email, folder, messageID, flagged)
 }
 
 // DeleteMessage moves a message to the Trash folder.
 func (s *WebmailService) DeleteMessage(ctx context.Context, mailboxID int, folder, messageID string) error {
-	email, err := s.mailboxEmail(ctx, mailboxID)
+	m, err := s.requireMailbox(ctx, mailboxID)
 	if err != nil {
 		return err
 	}
-	return s.provider.DeleteMessage(ctx, email, folder, messageID)
+	return s.provider.DeleteMessage(ctx, m.Email, folder, messageID)
 }
 
 // SaveDraft persists a draft message.
 func (s *WebmailService) SaveDraft(ctx context.Context, mailboxID int, msg *models.OutgoingMessage) error {
-	email, err := s.mailboxEmail(ctx, mailboxID)
+	m, err := s.requireMailbox(ctx, mailboxID)
 	if err != nil {
 		return err
 	}
-	return s.provider.SaveDraft(ctx, email, msg)
+	return s.provider.SaveDraft(ctx, m.Email, msg)
 }
 
 // EmptyTrash permanently removes every message currently in the Trash folder.
 func (s *WebmailService) EmptyTrash(ctx context.Context, mailboxID int) error {
-	email, err := s.mailboxEmail(ctx, mailboxID)
+	m, err := s.requireMailbox(ctx, mailboxID)
 	if err != nil {
 		return err
 	}
-	return s.provider.EmptyTrash(ctx, email)
+	return s.provider.EmptyTrash(ctx, m.Email)
 }
 
 // ListAccessibleMailboxes returns all mailboxes a user can view in the
@@ -149,11 +183,20 @@ func (s *WebmailService) ListAccessibleMailboxes(ctx context.Context, user *mode
 	}
 
 	if user.Role == "operator" {
-		return all, nil
+		var out []models.Mailbox
+		for _, m := range all {
+			if m.IsActive {
+				out = append(out, m)
+			}
+		}
+		return out, nil
 	}
 
 	var out []models.Mailbox
 	for _, m := range all {
+		if !m.IsActive {
+			continue
+		}
 		if m.Email == user.Email {
 			out = append(out, m)
 			continue
@@ -179,7 +222,7 @@ func (s *WebmailService) ListSendableMailboxes(ctx context.Context, user *models
 	}
 	var out []models.Mailbox
 	for _, m := range accessible {
-		if !m.CanSend {
+		if !m.IsActive || !m.CanSend {
 			continue
 		}
 		if user.Role == "operator" || m.Email == user.Email {

@@ -22,11 +22,11 @@
             </button>
             <div class="user-menu-dropdown" id="userMenu">
                 {{ if eq .User.Role "operator" }}
-                <a href="/users">Users</a>
                 <a href="/mailboxes">Mailboxes</a>
                 <a href="/domains">Domains</a>
                 <div class="menu-divider"></div>
-                <form method="post" action="/operator/logout" class="menu-logout">
+                <form method="post" action="{{operatorLogoutPath}}" class="menu-logout">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
                     <button type="submit">Logout</button>
                 </form>
                 {{ else if eq .User.Role "admin" }}
@@ -34,12 +34,15 @@
                 <a href="/mailboxes">Mailboxes</a>
                 <div class="menu-divider"></div>
                 <form method="post" action="/logout" class="menu-logout">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
                     <button type="submit">Logout</button>
                 </form>
                 {{ else }}
                 <a href="/inbox">Inbox</a>
+                <a href="/settings">Settings</a>
                 <div class="menu-divider"></div>
                 <form method="post" action="/logout" class="menu-logout">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
                     <button type="submit">Logout</button>
                 </form>
                 {{ end }}

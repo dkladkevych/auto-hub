@@ -1,0 +1,9 @@
+# Postfix PostgreSQL map for virtual mailboxes
+# Returns the Maildir-relative path (domain/user/) so Postfix virtual MDA
+# delivers to /var/mail/vhosts/<domain>/<user>/
+# Disabled mailboxes (is_active=0 or can_receive=0) are silently rejected.
+hosts = localhost
+dbname = autohub_mail
+user = autohub_mail_user
+password = YOUR_DB_PASSWORD
+query = SELECT domain || '/' || local_part || '/' FROM mailboxes WHERE email = '%s' AND is_active = 1 AND can_receive = 1

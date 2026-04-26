@@ -13,6 +13,7 @@
 
 {{ if .Domains }}
 <form method="post" action="/mailboxes" class="form-grid">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
     <div class="form-group">
         <label>Local Part (before @)</label>
         <input type="text" name="local_part" required placeholder="support">
@@ -34,15 +35,7 @@
         <label>Display Name</label>
         <input type="text" name="display_name" placeholder="Auto-Hub Support Team">
     </div>
-    <div class="form-group">
-        <label>Type</label>
-        <select name="mailbox_type" required>
-            <option value="shared" {{ if eq .PreselectType "shared" }}selected{{ end }}>Shared</option>
-            {{ if .CanSetSystemType }}
-            <option value="system" {{ if eq .PreselectType "system" }}selected{{ end }}>System</option>
-            {{ end }}
-        </select>
-    </div>
+    <input type="hidden" name="mailbox_type" value="{{.PreselectType}}">
     <div class="form-group">
         <label>Quota (MB)</label>
         <input type="number" name="quota_mb" value="1024" min="1" required>

@@ -18,6 +18,7 @@
         </tr>
     </thead>
     <tbody>
+        {{ $csrf := .CSRFToken }}
         {{ range .Domains }}
         <tr>
             <td>{{ .Domain }}</td>
@@ -26,6 +27,7 @@
                 <span class="pill pill-active">Default</span>
                 {{ else }}
                 <form method="post" action="/domains/{{ .ID }}/default" class="inline-form">
+    <input type="hidden" name="_csrf" value="{{$csrf}}">
                     <button type="submit" class="btn btn-sm">Set Default</button>
                 </form>
                 {{ end }}
@@ -39,6 +41,7 @@
             </td>
             <td>
                 <form method="post" action="/domains/{{ .ID }}/delete" class="inline-form" onsubmit="return confirm('Delete this domain?');">
+    <input type="hidden" name="_csrf" value="{{$csrf}}">
                     <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                 </form>
             </td>

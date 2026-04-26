@@ -20,7 +20,7 @@ func NewDomainRepo(db *sql.DB) *DomainRepo {
 // Create inserts a new domain and populates ID and CreatedAt on the model.
 func (r *DomainRepo) Create(ctx context.Context, d *models.Domain) error {
 	query := `INSERT INTO domains (domain, is_default, is_active) VALUES ($1, $2, $3) RETURNING id, created_at`
-	return r.db.QueryRowContext(ctx, query, d.Domain, d.IsDefault, d.IsActive).Scan(&d.ID, &d.CreatedAt)
+	return r.db.QueryRowContext(ctx, query, d.Domain, btoi(d.IsDefault), btoi(d.IsActive)).Scan(&d.ID, &d.CreatedAt)
 }
 
 // GetByID looks up a domain by its primary key.

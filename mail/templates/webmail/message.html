@@ -8,12 +8,27 @@
     <div class="content-header message-actions">
       <a href="/mailboxes/{{ .MailboxID }}/inbox?folder={{ .Folder }}" class="btn btn-sm">← Back</a>
       <div class="actions-right">
+        {{ if .IsDraft }}
+        <a href="/mailboxes/{{ .MailboxID }}/compose?draft_id={{ .Message.ID }}&folder=Drafts" class="btn btn-sm btn-primary">Edit</a>
+        {{ else }}
+        <a href="/mailboxes/{{ .MailboxID }}/messages/{{ .Message.ID }}/reply?folder={{ .Folder }}" class="btn btn-sm">Reply</a>
+        {{ end }}
+        <form method="post" action="/mailboxes/{{ .MailboxID }}/messages/{{ .Message.ID }}/flag" class="inline-form">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
+          <input type="hidden" name="folder" value="{{ .Folder }}">
+          <input type="hidden" name="flagged" value="{{ if .Message.Flagged }}false{{ else }}true{{ end }}">
+          <button type="submit" class="btn btn-sm {{ if .Message.Flagged }}starred{{ end }}" title="{{ if .Message.Flagged }}Unstar{{ else }}Star{{ end }}">
+            {{ if .Message.Flagged }}Starred{{ else }}Star{{ end }}
+          </button>
+        </form>
         <form method="post" action="/mailboxes/{{ .MailboxID }}/messages/{{ .Message.ID }}/seen" class="inline-form">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
           <input type="hidden" name="folder" value="{{ .Folder }}">
           <input type="hidden" name="seen" value="{{ if .Message.Seen }}false{{ else }}true{{ end }}">
           <button type="submit" class="btn btn-sm">{{ if .Message.Seen }}Mark Unread{{ else }}Mark Read{{ end }}</button>
         </form>
         <form method="post" action="/mailboxes/{{ .MailboxID }}/messages/{{ .Message.ID }}/delete" class="inline-form" onsubmit="return confirm('Delete this message?');">
+    <input type="hidden" name="_csrf" value="{{.CSRFToken}}">
           <input type="hidden" name="folder" value="{{ .Folder }}">
           <button type="submit" class="btn btn-sm btn-danger">Delete</button>
         </form>

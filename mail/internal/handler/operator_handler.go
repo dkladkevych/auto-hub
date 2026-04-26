@@ -4,21 +4,23 @@ import (
 	"net/http"
 
 	"auto-hub/mail/internal/config"
+	"auto-hub/mail/internal/models"
+	"auto-hub/mail/internal/repo"
 	"auto-hub/mail/internal/utils"
 	"github.com/gin-gonic/gin"
-	"golang.org/x/crypto/bcrypt"
 )
 
 // OperatorHandler manages the super-admin login flow.  The operator is a
 // special account that exists outside of the users table and is
 // authenticated via a standalone cookie with an HMAC token.
 type OperatorHandler struct {
-	cfg *config.Config
+	cfg       *config.Config
+	auditRepo *repo.AuditRepo
 }
 
 // NewOperatorHandler creates an OperatorHandler.
-func NewOperatorHandler(cfg *config.Config) *OperatorHandler {
-	return &OperatorHandler{cfg: cfg}
+func NewOperatorHandler(cfg *config.Config, auditRepo *repo.AuditRepo) *OperatorHandler {
+	return &OperatorHandler{cfg: cfg, auditRepo: auditRepo}
 }
 
 // LoginPage renders the operator password form.  If the request already
@@ -28,43 +30,67 @@ func (h *OperatorHandler) LoginPage(c *gin.Context) {
 		c.Redirect(http.StatusFound, "/")
 		return
 	}
-	c.HTML(http.StatusOK, "operator_login.html", gin.H{
-		"Title": "Operator Login",
+	c.HTML(http.StatusOK, "auth/operator_login.html", gin.H{
+		"CSRFToken":         CSRFToken(c),
+		"Title":             "Operator Login",
+		"OperatorLoginPath": h.cfg.OperatorLoginPath,
 	})
 }
 
-// Login validates the operator password.  In production the password must
-// be provided as a bcrypt hash (OPERATOR_PASSWORD_HASH); a plain-text
-// fallback (OPERATOR_PASSWORD) is supported for local development only.
+// Login validates the operator password.
 func (h *OperatorHandler) Login(c *gin.Context) {
 	password := c.PostForm("password")
 
 	valid := false
 	if h.cfg.OperatorPasswordHash != "" {
-		if err := bcrypt.CompareHashAndPassword([]byte(h.cfg.OperatorPasswordHash), []byte(password)); err == nil {
-			valid = true
-		}
+		valid = utils.CheckPassword(password, h.cfg.OperatorPasswordHash)
 	} else if h.cfg.OperatorPassword != "" {
 		valid = password == h.cfg.OperatorPassword
 	}
 
 	if !valid {
-		c.HTML(http.StatusUnauthorized, "operator_login.html", gin.H{
-			"Title": "Operator Login",
-			"Error": "Invalid password",
+		_ = h.auditRepo.Log(c.Request.Context(), &models.AuditLog{
+			Action:     "operator_login_failed",
+			EntityType: "operator",
+			Payload: map[string]interface{}{
+				"ip": c.ClientIP(),
+			},
+		})
+		c.HTML(http.StatusUnauthorized, "auth/operator_login.html", gin.H{
+			"CSRFToken":         CSRFToken(c),
+			"Title":             "Operator Login",
+			"Error":             "Invalid password",
+			"OperatorLoginPath": h.cfg.OperatorLoginPath,
 		})
 		return
 	}
 
+	_ = h.auditRepo.Log(c.Request.Context(), &models.AuditLog{
+		Action:     "operator_login_success",
+		EntityType: "operator",
+		Payload: map[string]interface{}{
+			"ip": c.ClientIP(),
+		},
+	})
+
 	token := utils.SetOperatorCookie(h.cfg.OperatorSessionSecret)
-	c.SetCookie("operator_auth", token, 86400, "/", "", false, true)
+	c.SetSameSite(h.cfg.SessionCookieSameSite)
+	c.SetCookie("operator_auth", token, 86400, "/", "", h.cfg.SessionCookieSecure, true)
 	c.Redirect(http.StatusFound, "/")
 }
 
 // Logout clears the operator authentication cookie.
 func (h *OperatorHandler) Logout(c *gin.Context) {
-	c.SetCookie("operator_auth", "", -1, "/", "", false, true)
-	c.Redirect(http.StatusFound, "/operator/login")
+	_ = h.auditRepo.Log(c.Request.Context(), &models.AuditLog{
+		Action:     "operator_logout",
+		EntityType: "operator",
+		Payload: map[string]interface{}{
+			"ip": c.ClientIP(),
+		},
+	})
+	c.SetSameSite(h.cfg.SessionCookieSameSite)
+	c.SetCookie("operator_auth", "", -1, "/", "", h.cfg.SessionCookieSecure, true)
+	c.Redirect(http.StatusFound, h.cfg.OperatorLoginPath)
 }
 
 // isOperator reports whether the request carries a valid operator cookie.

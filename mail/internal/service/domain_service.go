@@ -39,13 +39,7 @@ func (s *DomainService) Create(ctx context.Context, actorID int, domain string, 
 		return nil, err
 	}
 
-	_ = s.auditRepo.Log(ctx, &models.AuditLog{
-		ActorUserID: &actorID,
-		Action:      "domain_created",
-		EntityType:  "domain",
-		EntityID:    &d.ID,
-		Payload:     map[string]interface{}{"domain": domain, "is_default": makeDefault},
-	})
+	_ = s.auditRepo.Log(ctx, buildAuditLog(actorID, "domain_created", "domain", &d.ID, map[string]interface{}{"domain": domain, "is_default": makeDefault}))
 
 	return d, nil
 }
@@ -82,13 +76,7 @@ func (s *DomainService) SetDefault(ctx context.Context, actorID, id int) error {
 		return err
 	}
 
-	_ = s.auditRepo.Log(ctx, &models.AuditLog{
-		ActorUserID: &actorID,
-		Action:      "domain_set_default",
-		EntityType:  "domain",
-		EntityID:    &id,
-		Payload:     map[string]interface{}{},
-	})
+	_ = s.auditRepo.Log(ctx, buildAuditLog(actorID, "domain_set_default", "domain", &id, map[string]interface{}{}))
 
 	return nil
 }
@@ -115,13 +103,7 @@ func (s *DomainService) Delete(ctx context.Context, actorID, id int) error {
 		return err
 	}
 
-	_ = s.auditRepo.Log(ctx, &models.AuditLog{
-		ActorUserID: &actorID,
-		Action:      "domain_deleted",
-		EntityType:  "domain",
-		EntityID:    &id,
-		Payload:     map[string]interface{}{},
-	})
+	_ = s.auditRepo.Log(ctx, buildAuditLog(actorID, "domain_deleted", "domain", &id, map[string]interface{}{}))
 
 	return nil
 }
