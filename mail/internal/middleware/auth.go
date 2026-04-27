@@ -4,7 +4,9 @@ package middleware
 
 import (
 	"net/http"
+	"strings"
 
+	"auto-hub/mail/internal/config"
 	"auto-hub/mail/internal/models"
 	"auto-hub/mail/internal/service"
 	"auto-hub/mail/internal/utils"
@@ -42,6 +44,42 @@ func AuthRequired(authService *service.AuthService, sessionSecret string) gin.Ha
 		c.Set("session", session)
 		c.Set("user", user)
 		c.Set("user_role", user.Role)
+		c.Next()
+	}
+}
+
+// InternalAPIAuth returns a middleware that validates an Authorization: Bearer
+// header against the configured internal API token.  On success it injects a
+// synthetic operator user so that downstream code (e.g. actorFromContext and
+// audit logging) works unchanged.
+func InternalAPIAuth(cfg *config.Config) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if !cfg.InternalAPIEnabled {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "internal api disabled"})
+			return
+		}
+
+		authHeader := c.GetHeader("Authorization")
+		const prefix = "Bearer "
+		if !strings.HasPrefix(authHeader, prefix) {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "missing bearer token"})
+			return
+		}
+		token := strings.TrimPrefix(authHeader, prefix)
+		if token == "" || token != cfg.InternalAPIToken {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
+			return
+		}
+
+		c.Set("is_operator", true)
+		c.Set("user_role", "operator")
+		c.Set("user", &models.User{
+			ID:       0,
+			FullName: "Internal API",
+			Role:     "operator",
+			Email:    "internal@system",
+			IsActive: true,
+		})
 		c.Next()
 	}
 }

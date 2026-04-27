@@ -60,6 +60,10 @@ type Config struct {
 	SendRateLimitWindow         time.Duration
 	DraftRateLimitMax           int
 	DraftRateLimitWindow        time.Duration
+
+	// Internal API settings
+	InternalAPIEnabled bool
+	InternalAPIToken   string
 }
 
 // Load reads environment variables (optionally from a .env file) and returns
@@ -130,6 +134,9 @@ func Load() *Config {
 		SendRateLimitWindow:     time.Duration(sendRateLimitWindow) * time.Minute,
 		DraftRateLimitMax:       draftRateLimitMax,
 		DraftRateLimitWindow:    time.Duration(draftRateLimitWindow) * time.Minute,
+
+		InternalAPIEnabled: getEnv("INTERNAL_API_ENABLED", "false") == "true",
+		InternalAPIToken:   getEnv("INTERNAL_API_TOKEN", ""),
 	}
 }
 

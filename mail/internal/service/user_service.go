@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"auto-hub/mail/internal/maildir"
@@ -127,9 +128,7 @@ func (s *UserService) Create(ctx context.Context, actorID int, username, passwor
 	}
 
 	if err := maildir.Create(mailbox.MaildirPath); err != nil {
-		_ = s.mailboxRepo.Delete(ctx, mailbox.ID)
-		_ = s.userRepo.Delete(ctx, user.ID)
-		return nil, nil, fmt.Errorf("maildir creation failed: %w", err)
+		log.Printf("maildir create warning for %s: %v", mailbox.MaildirPath, err)
 	}
 
 	member := &models.MailboxMember{

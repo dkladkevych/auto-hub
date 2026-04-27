@@ -3,32 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Admin | Auto-Hub{% endblock %}</title>
+    <title>{{ block "title" . }}Admin | Auto-Hub{{ end }}</title>
 
     <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
     <meta name="googlebot" content="noindex, nofollow">
 
-    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="icon" href="/static/images/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/css/base.css">
+    <link rel="stylesheet" href="/static/css/admin.css">
 
-    {% block head %}{% endblock %}
+    {{ block "head" . }}{{ end }}
 </head>
 <body class="admin-body">
     <header class="header">
         <div class="container header-inner">
             <div class="brand-block">
                 <h1>
-                    <a href="/{{ ADMIN_PATH }}">Auto-Hub Admin</a>
+                    <a href="/{{ .AdminPath }}">Auto-Hub Admin</a>
                 </h1>
             </div>
         </div>
     </header>
 
     <main class="container">
-        {% block content %}{% endblock %}
+        {{ template "content" . }}
     </main>
 
-    {% block scripts %}{% endblock %}
+    {{ block "scripts" . }}{{ end }}
 </body>
 </html>

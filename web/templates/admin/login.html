@@ -1,21 +1,17 @@
-{% extends "admin/base.html" %}
-
-{% block title %}Admin Login | Auto-Hub{% endblock %}
-
-{% block content %}
+{{ define "content" }}
 <div class="auth-box">
     <div class="auth-box-inner">
         <h2>Admin Login</h2>
 
-        {% if error %}
-            <p class="error-text">{{ error }}</p>
-        {% endif %}
+        {{ if .Error }}
+            <p class="error-text">{{ .Error }}</p>
+        {{ end }}
 
         <form method="POST" class="form-card">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="csrf_token" value="{{ .CSRFToken }}">
             <input type="password" name="password" placeholder="Password" required>
             <button type="submit">Login</button>
         </form>
     </div>
 </div>
-{% endblock %}
+{{ end }}

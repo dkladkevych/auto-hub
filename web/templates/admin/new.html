@@ -1,40 +1,36 @@
-{% extends "admin/base.html" %}
-
-{% block title %}Add Listing | Auto-Hub{% endblock %}
-
-{% block head %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/easymde.min.css') }}">
-{% endblock %}
-
-{% block content %}
+{{ define "title" }}Add Listing | Auto-Hub{{ end }}
+{{ define "head" }}
+<link rel="stylesheet" href="/static/css/easymde.min.css">
+{{ end }}
+{{ define "content" }}
 <div class="page-head">
     <h2>Add Listing</h2>
 
     <div class="admin-actions">
-        <a class="soft-link" href="/{{ ADMIN_PATH }}">Dashboard</a>
-        <form method="POST" action="/{{ ADMIN_PATH }}/logout">
+        <a class="soft-link" href="/{{ .AdminPath }}">Dashboard</a>
+        <form method="POST" action="/{{ .AdminPath }}/logout">
             <button type="submit" class="secondary-btn">Logout</button>
         </form>
     </div>
 </div>
 
-{% if error %}
-    <p class="error-text">{{ error }}</p>
-{% endif %}
+{{ if .Error }}
+    <p class="error-text">{{ .Error }}</p>
+{{ end }}
 
-{% if errors %}
+{{ if .Errors }}
     <div class="form-errors">
         <p>Please fix the following errors:</p>
         <ul>
-            {% for field, msg in errors.items() %}
-            <li><strong>{{ field | replace('_', ' ') | title }}</strong>: {{ msg }}</li>
-            {% endfor %}
+            {{ range $field, $msg := .Errors }}
+            <li><strong>{{ titleCase $field }}</strong>: {{ $msg }}</li>
+            {{ end }}
         </ul>
     </div>
-{% endif %}
+{{ end }}
 
 <form method="POST" enctype="multipart/form-data" class="form-card admin-form">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="csrf_token" value="{{ .CSRFToken }}">
     <section class="admin-form-section">
         <div class="section-head">
             <h3>Basics</h3>
@@ -43,66 +39,66 @@
 
         <div class="admin-form-grid admin-form-grid-3">
             <div class="field-wrap">
-                <input type="number" name="year" placeholder="Year *" value="{{ form_data.get('year', '') }}" required class="{% if errors and errors.get('year') %}has-error{% endif %}">
-                {% if errors and errors.get('year') %}<span class="field-error">{{ errors['year'] }}</span>{% endif %}
+                <input type="number" name="year" placeholder="Year *" value="{{ .FormValues.year }}" required class="{{ if index .Errors "year" }}has-error{{ end }}">
+                {{ if index .Errors "year" }}<span class="field-error">{{ index .Errors "year" }}</span>{{ end }}
             </div>
             <div class="field-wrap">
-                <input type="text" name="make" placeholder="Make *" value="{{ form_data.get('make', '') }}" required class="{% if errors and errors.get('make') %}has-error{% endif %}">
-                {% if errors and errors.get('make') %}<span class="field-error">{{ errors['make'] }}</span>{% endif %}
+                <input type="text" name="make" placeholder="Make *" value="{{ .FormValues.make }}" required class="{{ if index .Errors "make" }}has-error{{ end }}">
+                {{ if index .Errors "make" }}<span class="field-error">{{ index .Errors "make" }}</span>{{ end }}
             </div>
             <div class="field-wrap">
-                <input type="text" name="model" placeholder="Model *" value="{{ form_data.get('model', '') }}" required class="{% if errors and errors.get('model') %}has-error{% endif %}">
-                {% if errors and errors.get('model') %}<span class="field-error">{{ errors['model'] }}</span>{% endif %}
-            </div>
-        </div>
-
-        <div class="admin-form-grid admin-form-grid-2">
-            <div class="field-wrap">
-                <input type="number" name="price" placeholder="Price *" value="{{ form_data.get('price', '') }}" required class="{% if errors and errors.get('price') %}has-error{% endif %}">
-                {% if errors and errors.get('price') %}<span class="field-error">{{ errors['price'] }}</span>{% endif %}
-            </div>
-            <div class="field-wrap">
-                <input type="number" name="mileage_km" placeholder="Mileage (km) *" value="{{ form_data.get('mileage_km', '') }}" required class="{% if errors and errors.get('mileage_km') %}has-error{% endif %}">
-                {% if errors and errors.get('mileage_km') %}<span class="field-error">{{ errors['mileage_km'] }}</span>{% endif %}
+                <input type="text" name="model" placeholder="Model *" value="{{ .FormValues.model }}" required class="{{ if index .Errors "model" }}has-error{{ end }}">
+                {{ if index .Errors "model" }}<span class="field-error">{{ index .Errors "model" }}</span>{{ end }}
             </div>
         </div>
 
         <div class="admin-form-grid admin-form-grid-2">
             <div class="field-wrap">
-                <select name="transmission" required class="{% if errors and errors.get('transmission') %}has-error{% endif %}">
+                <input type="number" name="price" placeholder="Price *" value="{{ .FormValues.price }}" required class="{{ if index .Errors "price" }}has-error{{ end }}">
+                {{ if index .Errors "price" }}<span class="field-error">{{ index .Errors "price" }}</span>{{ end }}
+            </div>
+            <div class="field-wrap">
+                <input type="number" name="mileage_km" placeholder="Mileage (km) *" value="{{ .FormValues.mileage_km }}" required class="{{ if index .Errors "mileage_km" }}has-error{{ end }}">
+                {{ if index .Errors "mileage_km" }}<span class="field-error">{{ index .Errors "mileage_km" }}</span>{{ end }}
+            </div>
+        </div>
+
+        <div class="admin-form-grid admin-form-grid-2">
+            <div class="field-wrap">
+                <select name="transmission" required class="{{ if index .Errors "transmission" }}has-error{{ end }}">
                     <option value="">Transmission *</option>
-                    <option value="Automatic" {% if form_data.get('transmission') == 'Automatic' %}selected{% endif %}>Automatic</option>
-                    <option value="Manual" {% if form_data.get('transmission') == 'Manual' %}selected{% endif %}>Manual</option>
-                    <option value="CVT" {% if form_data.get('transmission') == 'CVT' %}selected{% endif %}>CVT</option>
-                    <option value="Unknown" {% if form_data.get('transmission') == 'Unknown' %}selected{% endif %}>Unknown</option>
+                    <option value="Automatic" {{ if eq .FormValues.transmission "Automatic" }}selected{{ end }}>Automatic</option>
+                    <option value="Manual" {{ if eq .FormValues.transmission "Manual" }}selected{{ end }}>Manual</option>
+                    <option value="CVT" {{ if eq .FormValues.transmission "CVT" }}selected{{ end }}>CVT</option>
+                    <option value="Unknown" {{ if eq .FormValues.transmission "Unknown" }}selected{{ end }}>Unknown</option>
                 </select>
-                {% if errors and errors.get('transmission') %}<span class="field-error">{{ errors['transmission'] }}</span>{% endif %}
+                {{ if index .Errors "transmission" }}<span class="field-error">{{ index .Errors "transmission" }}</span>{{ end }}
             </div>
             <div class="field-wrap">
-                <select name="drivetrain" required class="{% if errors and errors.get('drivetrain') %}has-error{% endif %}">
+                <select name="drivetrain" required class="{{ if index .Errors "drivetrain" }}has-error{{ end }}">
                     <option value="">Drivetrain *</option>
-                    <option value="FWD" {% if form_data.get('drivetrain') == 'FWD' %}selected{% endif %}>FWD</option>
-                    <option value="RWD" {% if form_data.get('drivetrain') == 'RWD' %}selected{% endif %}>RWD</option>
-                    <option value="AWD" {% if form_data.get('drivetrain') == 'AWD' %}selected{% endif %}>AWD</option>
-                    <option value="4WD" {% if form_data.get('drivetrain') == '4WD' %}selected{% endif %}>4WD</option>
-                    <option value="Unknown" {% if form_data.get('drivetrain') == 'Unknown' %}selected{% endif %}>Unknown</option>
+                    <option value="FWD" {{ if eq .FormValues.drivetrain "FWD" }}selected{{ end }}>FWD</option>
+                    <option value="RWD" {{ if eq .FormValues.drivetrain "RWD" }}selected{{ end }}>RWD</option>
+                    <option value="AWD" {{ if eq .FormValues.drivetrain "AWD" }}selected{{ end }}>AWD</option>
+                    <option value="4WD" {{ if eq .FormValues.drivetrain "4WD" }}selected{{ end }}>4WD</option>
+                    <option value="Unknown" {{ if eq .FormValues.drivetrain "Unknown" }}selected{{ end }}>Unknown</option>
                 </select>
-                {% if errors and errors.get('drivetrain') %}<span class="field-error">{{ errors['drivetrain'] }}</span>{% endif %}
+                {{ if index .Errors "drivetrain" }}<span class="field-error">{{ index .Errors "drivetrain" }}</span>{{ end }}
             </div>
         </div>
 
         <div class="field-wrap">
-            <input type="text" name="location" placeholder="Location *" value="{{ form_data.get('location', '') }}" required class="{% if errors and errors.get('location') %}has-error{% endif %}">
-            {% if errors and errors.get('location') %}<span class="field-error">{{ errors['location'] }}</span>{% endif %}
+            <input type="text" name="location" placeholder="Location *" value="{{ .FormValues.location }}" required class="{{ if index .Errors "location" }}has-error{{ end }}">
+            {{ if index .Errors "location" }}<span class="field-error">{{ index .Errors "location" }}</span>{{ end }}
         </div>
         <div class="field-wrap">
-            <input type="text" name="source_url" placeholder="Source URL *" value="{{ form_data.get('source_url', '') }}" required class="{% if errors and errors.get('source_url') %}has-error{% endif %}">
-            {% if errors and errors.get('source_url') %}<span class="field-error">{{ errors['source_url'] }}</span>{% endif %}
+            <input type="text" name="source_url" placeholder="Source URL *" value="{{ .FormValues.source_url }}" required class="{{ if index .Errors "source_url" }}has-error{{ end }}">
+            {{ if index .Errors "source_url" }}<span class="field-error">{{ index .Errors "source_url" }}</span>{{ end }}
         </div>
 
         <div class="field-wrap">
-            <textarea name="description" placeholder="Public description *" class="{% if errors and errors.get('description') %}has-error{% endif %}">{{ form_data.get('description', '') }}</textarea>
-            {% if errors and errors.get('description') %}<span class="field-error">{{ errors['description'] }}</span>{% endif %}
+            <textarea name="description" placeholder="Public description *" class="{{ if index .Errors "description" }}has-error{{ end }}">{{ .FormValues.description }}</textarea>
+            {{ if index .Errors "description" }}<span class="field-error">{{ index .Errors "description" }}</span>{{ end }}
         </div>
 
         <div class="drop-zone" id="dropZone">
@@ -123,18 +119,18 @@
 
         <div class="admin-form-grid admin-form-grid-2">
             <div class="field-wrap">
-                <select name="condition" required class="{% if errors and errors.get('condition') %}has-error{% endif %}">
+                <select name="condition" required class="{{ if index .Errors "condition" }}has-error{{ end }}">
                     <option value="">Condition *</option>
-                    <option value="Good" {% if form_data.get('condition') == 'Good' %}selected{% endif %}>Good</option>
-                    <option value="Fair" {% if form_data.get('condition') == 'Fair' %}selected{% endif %}>Fair</option>
-                    <option value="Poor" {% if form_data.get('condition') == 'Poor' %}selected{% endif %}>Poor</option>
+                    <option value="Good" {{ if eq .FormValues.condition "Good" }}selected{{ end }}>Good</option>
+                    <option value="Fair" {{ if eq .FormValues.condition "Fair" }}selected{{ end }}>Fair</option>
+                    <option value="Poor" {{ if eq .FormValues.condition "Poor" }}selected{{ end }}>Poor</option>
                 </select>
-                {% if errors and errors.get('condition') %}<span class="field-error">{{ errors['condition'] }}</span>{% endif %}
+                {{ if index .Errors "condition" }}<span class="field-error">{{ index .Errors "condition" }}</span>{{ end }}
             </div>
         </div>
 
         <div class="field-wrap">
-            <textarea name="notes" placeholder="Internal notes (admin only)">{{ form_data.get('notes', '') }}</textarea>
+            <textarea name="notes" placeholder="Internal notes (admin only)">{{ .FormValues.notes }}</textarea>
         </div>
     </section>
 
@@ -144,11 +140,11 @@
         <button type="submit" name="save_mode" value="publish">Publish</button>
     </div>
 </form>
-{% endblock %}
+{{ end }}
 
-{% block scripts %}
-<script src="{{ url_for('static', filename='js/easymde.min.js') }}"></script>
-<script src="{{ url_for('static', filename='js/admin_images.js') }}"></script>
+{{ define "scripts" }}
+<script src="/static/js/easymde.min.js"></script>
+<script src="/static/js/admin_images.js"></script>
 <script>
 const easyMDE = new EasyMDE({ element: document.querySelector('textarea[name="description"]') });
 ImageUploader({
@@ -156,8 +152,8 @@ ImageUploader({
     dropZoneId: 'dropZone',
     fileInputId: 'fileInput',
     formSelector: 'form.admin-form',
-    adminPath: '{{ ADMIN_PATH }}',
+    adminPath: '{{ .AdminPath }}',
     initial: []
 });
 </script>
-{% endblock %}
+{{ end }}

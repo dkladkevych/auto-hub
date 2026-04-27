@@ -1,0 +1,25 @@
+{{ define "title" }}Register | Auto-Hub{{ end }}
+{{ define "content" }}
+<div class="auth-box">
+    <div class="auth-box-inner">
+        <h2>Create Account</h2>
+
+        {{ if .Error }}
+            <p class="error-text">{{ .Error }}</p>
+        {{ end }}
+
+        <form method="POST" class="form-card">
+            <input type="hidden" name="csrf_token" value="{{ .CSRFToken }}">
+            <input type="text" name="full_name" placeholder="Full Name" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Password" minlength="6" required>
+            <input type="password" name="confirm_password" placeholder="Confirm Password" minlength="6" required>
+            <button type="submit">Register</button>
+        </form>
+
+        <div class="auth-links">
+            Already have an account? <a href="/login">Log in</a>
+        </div>
+    </div>
+</div>
+{{ end }}

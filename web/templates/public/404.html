@@ -1,8 +1,4 @@
-{% extends "public/base.html" %}
-
-{% block title %}Page not found | Auto-Hub{% endblock %}
-
-{% block content %}
+{{ define "content" }}
 <div class="notfound-page">
     <div class="notfound-card">
         <h1>404</h1>
@@ -17,4 +13,4 @@
         </div>
     </div>
 </div>
-{% endblock %}
+{{ end }}

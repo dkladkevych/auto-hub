@@ -1,8 +1,5 @@
-{% extends "public/base.html" %}
-
-{% block title %}Terms of Use | Auto-Hub{% endblock %}
-
-{% block content %}
+{{ define "title" }}Terms of Use | Auto-Hub{{ end }}
+{{ define "content" }}
 <div class="legal-page">
     <h1>Terms of Use</h1>
 
@@ -46,4 +43,4 @@
         </p>
     </div>
 </div>
-{% endblock %}
+{{ end }}

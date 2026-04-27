@@ -157,6 +157,35 @@ func hasFlag(flags []string, flag string) bool {
 	return false
 }
 
+// ensureMailboxExists checks whether an IMAP folder exists and creates it if
+// missing.  "Already exists" errors are ignored to handle races.
+func ensureMailboxExists(c *client.Client, folder string) error {
+	mboxes := make(chan *imap.MailboxInfo, 10)
+	done := make(chan error, 1)
+	go func() {
+		done <- c.List("", folder, mboxes)
+	}()
+	exists := false
+	for m := range mboxes {
+		if m.Name == folder {
+			exists = true
+		}
+	}
+	if err := <-done; err != nil {
+		return err
+	}
+	if exists {
+		return nil
+	}
+	if err := c.Create(folder); err != nil {
+		if strings.Contains(err.Error(), "already exists") {
+			return nil
+		}
+		return err
+	}
+	return nil
+}
+
 func (p *IMAPMailProvider) parseIMAPMessage(msg *imap.Message) (*models.Message, error) {
 	if msg == nil {
 		return nil, errors.New("nil message")
@@ -389,15 +418,24 @@ func (p *IMAPMailProvider) SendMessage(ctx context.Context, mailboxEmail string,
 		return fmt.Errorf("smtp send failed: %w", err)
 	}
 
-	// Append copy to Sent
+	// Append copy to Sent (best-effort; SMTP already succeeded)
 	c, err := p.connect(ctx, mailboxEmail)
 	if err != nil {
-		return err
+		log.Printf("imap connect for sent copy: %v", err)
+		return nil
 	}
 	defer c.Logout()
 
+	if err := ensureMailboxExists(c, "Sent"); err != nil {
+		log.Printf("imap ensure Sent folder: %v", err)
+		return nil
+	}
+
 	rfc822 := buildSimpleRFC822(mailboxEmail, fromName, msg)
-	return c.Append("Sent", []string{imap.SeenFlag}, time.Now(), bytes.NewReader(rfc822))
+	if err := c.Append("Sent", []string{imap.SeenFlag}, time.Now(), bytes.NewReader(rfc822)); err != nil {
+		log.Printf("imap append to Sent: %v", err)
+	}
+	return nil
 }
 
 // buildSimpleRFC822 builds a minimal plaintext RFC822 message for APPEND to Sent.
@@ -494,6 +532,10 @@ func (p *IMAPMailProvider) DeleteMessage(ctx context.Context, mailboxEmail strin
 	seqset := new(imap.SeqSet)
 	seqset.AddNum(uint32(uid))
 
+	if err := ensureMailboxExists(c, "Trash"); err != nil {
+		return err
+	}
+
 	if err := c.UidMove(seqset, "Trash"); err == nil {
 		return nil
 	}
@@ -515,6 +557,10 @@ func (p *IMAPMailProvider) SaveDraft(ctx context.Context, mailboxEmail string, m
 	}
 	defer c.Logout()
 
+	if err := ensureMailboxExists(c, "Drafts"); err != nil {
+		return err
+	}
+
 	rfc822 := buildSimpleRFC822(mailboxEmail, "", msg)
 	return c.Append("Drafts", []string{imap.DraftFlag}, time.Now(), bytes.NewReader(rfc822))
 }
@@ -526,6 +572,10 @@ func (p *IMAPMailProvider) EmptyTrash(ctx context.Context, mailboxEmail string) 
 		return err
 	}
 	defer c.Logout()
+
+	if err := ensureMailboxExists(c, "Trash"); err != nil {
+		return err
+	}
 
 	if _, err := c.Select("Trash", false); err != nil {
 		return err

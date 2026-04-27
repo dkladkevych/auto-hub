@@ -227,10 +227,11 @@ func (h *MailboxHandler) Update(c *gin.Context) {
 	if quotaMb <= 0 {
 		quotaMb = 1024
 	}
+	isActive := c.PostForm("is_active") == "on"
 
 	actorID, _ := actorFromContext(c)
 
-	if err := h.mailboxService.Update(c.Request.Context(), actorID, id, displayName, mailboxType, quotaMb); err != nil {
+	if err := h.mailboxService.Update(c.Request.Context(), actorID, id, displayName, mailboxType, quotaMb, isActive); err != nil {
 		c.String(http.StatusBadRequest, err.Error())
 		return
 	}

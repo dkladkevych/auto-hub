@@ -139,6 +139,9 @@
                 <input type="number" name="quota_mb" value="{{ .Mailbox.QuotaMb }}" min="1" required>
             </div>
             <div class="form-group form-check">
+                <label><input type="checkbox" name="is_active" {{ if .Mailbox.IsActive }}checked{{ end }}> Active</label>
+            </div>
+            <div class="form-group form-check">
                 <label><input type="checkbox" name="can_receive" {{ if .Mailbox.CanReceive }}checked{{ end }}> Can Receive emails</label>
             </div>
             <div class="form-group form-check">
@@ -174,6 +177,9 @@
                 <label>Quota (MB)</label>
                 <input type="number" name="quota_mb" value="{{ .Mailbox.QuotaMb }}" min="1" required>
             </div>
+            <div class="form-group form-check">
+                <label><input type="checkbox" name="is_active" {{ if .Mailbox.IsActive }}checked{{ end }}> Active</label>
+            </div>
             <div class="form-actions">
                 <button type="submit" class="btn btn-primary">Save Changes</button>
             </div>
@@ -200,6 +206,7 @@
         </form>
     </div>
 </div>
+{{ end }}
 
 {{ if eq .Mailbox.MailboxType "shared" }}
 <div id="members" class="tab-panel">

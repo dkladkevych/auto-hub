@@ -46,6 +46,12 @@ func verifyCSRF(token, signature, secret string) bool {
 // must echo it back.
 func CSRFProtect(cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Internal API routes are machine-to-machine and use bearer tokens.
+		if strings.HasPrefix(c.Request.URL.Path, "/internal/") {
+			c.Next()
+			return
+		}
+
 		// Safe methods: ensure a fresh CSRF cookie exists.
 		if c.Request.Method == http.MethodGet || c.Request.Method == http.MethodHead {
 			raw := generateRandomString(32)

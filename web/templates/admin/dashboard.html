@@ -1,14 +1,12 @@
-{% extends "admin/base.html" %}
-{% block title %}Admin Dashboard | Auto-Hub{% endblock %}
-
-{% block content %}
+{{ define "title" }}Admin Dashboard | Auto-Hub{{ end }}
+{{ define "content" }}
 <div class="page-head">
     <h2>Admin Dashboard</h2>
 
     <div class="admin-actions">
-        <a class="soft-link" href="/{{ ADMIN_PATH }}/new">Add listing</a>
-        <form method="POST" action="/{{ ADMIN_PATH }}/logout">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <a class="soft-link" href="/{{ .AdminPath }}/new">Add listing</a>
+        <form method="POST" action="/{{ .AdminPath }}/logout">
+            <input type="hidden" name="csrf_token" value="{{ .CSRFToken }}">
             <button type="submit" class="secondary-btn">Logout</button>
         </form>
     </div>
@@ -17,44 +15,44 @@
 <div class="stats-grid">
     <div class="stat-card">
         <span>Total</span>
-        <strong>{{ total_count }}</strong>
+        <strong>{{ .TotalCount }}</strong>
     </div>
 
     <div class="stat-card">
         <span>Drafts</span>
-        <strong>{{ draft_count }}</strong>
+        <strong>{{ .DraftCount }}</strong>
     </div>
 
     <div class="stat-card">
         <span>Active</span>
-        <strong>{{ active_count }}</strong>
+        <strong>{{ .ActiveCount }}</strong>
     </div>
 
     <div class="stat-card">
         <span>Archived</span>
-        <strong>{{ archived_count }}</strong>
+        <strong>{{ .ArchivedCount }}</strong>
     </div>
 
     <div class="stat-card">
         <span>Demo</span>
-        <strong>{{ demo_count }}</strong>
+        <strong>{{ .DemoCount }}</strong>
     </div>
 
     <div class="stat-card">
         <span>Site visits</span>
-        <strong>{{ total_site_visits }}</strong>
+        <strong>{{ .TotalSiteVisits }}</strong>
     </div>
 
     <div class="stat-card">
         <span>Listing views</span>
-        <strong>{{ total_listing_views }}</strong>
+        <strong>{{ .TotalListingViews }}</strong>
     </div>
 </div>
 
 <div id="adminListingsBlock">
-    {% include "admin/partials/listings_table.html" %}
+    {{ template "admin_listings_table" . }}
 </div>
 
-<script>window.ADMIN_PATH = "{{ ADMIN_PATH }}";</script>
-<script src="{{ url_for('static', filename='js/admin_dashboard.js') }}"></script>
-{% endblock %}
+<script>window.ADMIN_PATH = "{{ .AdminPath }}";</script>
+<script src="/static/js/admin_dashboard.js"></script>
+{{ end }}

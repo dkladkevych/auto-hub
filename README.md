@@ -53,12 +53,11 @@ Users receive a clean list of options instead of random links.
 
 ## Tech Stack
 
-- **Backend:** Python 3 + Flask
-- **Frontend:** Server-rendered Jinja2 templates, vanilla JS
-- **Database:** SQLite
+- **Backend:** Go 1.26 + Gin
+- **Frontend:** Server-rendered Go templates, vanilla JS
+- **Database:** SQLite (modernc.org/sqlite)
 - **Styling:** plain CSS (no frameworks)
-- **Server:** gunicorn (production)
-- **Tests:** pytest
+- **Tests:** `go test`
 
 ---
 
@@ -66,83 +65,64 @@ Users receive a clean list of options instead of random links.
 
 ```
 auto-hub/
-├── web/                        # Flask application
-│   ├── app/
-│   │   ├── __init__.py         # App factory, blueprints registration
-│   │   ├── config.py           # Centralized config from env vars
-│   │   ├── constants.py        # App constants (dropdown options)
-│   │   ├── context.py          # Template context processors
-│   │   ├── db.py               # SQLite init & connection helper
-│   │   ├── decorators.py       # @admin_required
-│   │   ├── extensions.py       # Flask extensions (Compress, Limiter, CSRF)
-│   │   ├── routes/
-│   │   │   ├── public.py       # Public pages (home, listing detail, saved, sitemap)
-│   │   │   ├── pages.py        # Static pages (terms, privacy, 404)
-│   │   │   └── admin.py        # Admin routes (CRUD, login, logout)
-│   │   ├── services/
-│   │   │   ├── listings.py     # Public listing logic & filters
-│   │   │   └── admin.py        # Admin logic (CRUD, stats, validation)
-│   │   └── utils/
-│   │       ├── images.py       # Image/video upload, sync, delete, preview, thumbnails
-│   │       ├── location.py     # Location normalization & aliases
-│   │       ├── stats.py        # Visit / view counters (UPSERT)
-│   │       └── vin.py          # VIN masking utility (unused)
+├── web/                        # Go web application
+│   ├── cmd/server/main.go      # Entry point
+│   ├── internal/
+│   │   ├── config/             # Env configuration
+│   │   ├── db/                 # SQLite init & schema
+│   │   ├── handler/            # HTTP handlers (Gin)
+│   │   ├── middleware/         # Auth, CSRF, rate limiting, flash messages
+│   │   ├── models/             # Domain structs
+│   │   ├── repo/               # Thin SQL repositories
+│   │   ├── service/            # Business logic
+│   │   └── utils/              # Images, markdown, stats helpers
 │   ├── data/
 │   │   ├── db/
 │   │   │   └── db.sqlite       # SQLite database (ignored by git)
 │   │   └── listings/{id}/      # Listing media folders
 │   ├── static/
 │   │   ├── css/
-│   │   │   ├── base.css        # Design system (vars, buttons, forms)
-│   │   │   ├── site.css        # Public site layout
-│   │   │   ├── admin.css       # Admin panel styles
-│   │   │   └── easymde.min.css # Markdown editor styles
 │   │   ├── js/
-│   │   │   ├── filters.js      # Advanced filters panel toggle
-│   │   │   ├── favorites.js    # Save/unsave listings
-│   │   │   ├── gallery.js      # Listing gallery & lightbox
-│   │   │   ├── admin_dashboard.js  # AJAX pagination
-│   │   │   ├── admin_images.js     # Drag & drop image uploader
-│   │   │   └── easymde.min.js      # Markdown editor
 │   │   └── images/
 │   ├── templates/
 │   │   ├── public/             # Public templates
 │   │   └── admin/              # Admin templates
-│   ├── tests/                  # pytest test suite
+│   ├── tests/                  # Go test suite
 │   ├── .env                    # Environment variables (ignored by git)
-│   ├── requirements.txt
-│   └── run.py                  # Dev entry point
+│   └── go.mod
+├── mail/                       # Mail control panel (separate Go service)
+└── README.md
 ```
 
 ---
 
 ## Development
 
-### Setup
+### Prerequisites
 
-```bash
-cd web
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-```
+- Go 1.26 or newer
 
 ### Run (development)
 
 ```bash
-python run.py
+cd web
+go run cmd/server/main.go
 ```
 
-### Run (production)
+The server starts on `:8000` by default.
+
+### Build
 
 ```bash
-gunicorn -w 2 -b 0.0.0.0:8000 run:app
+cd web
+go build -o main cmd/server/main.go
 ```
 
 ### Run tests
 
 ```bash
-pytest
+cd web
+go test ./tests
 ```
 
 ---
@@ -157,19 +137,23 @@ ADMIN_PASSWORD_HASH=your_hashed_password
 ADMIN_PATH=custom_admin_url_path
 ```
 
-Generate hash:
+Generate bcrypt hash (if you want to use `ADMIN_PASSWORD_HASH`):
 
-```python
-from werkzeug.security import generate_password_hash
-print(generate_password_hash("your_password"))
+```bash
+go run golang.org/x/crypto/bcrypt/cmd/bcrypt@latest
 ```
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `SECRET_KEY` | `fallback_secret` | Flask session encryption |
-| `ADMIN_PASSWORD_HASH` | — | Admin panel password hash (preferred) |
+| `SECRET_KEY` | `fallback_secret` | Session cookie encryption |
+| `ADMIN_PASSWORD_HASH` | — | Admin panel bcrypt hash (preferred) |
 | `ADMIN_PASSWORD` | `fallback_password` | Plaintext admin password (fallback) |
 | `ADMIN_PATH` | `admin` | Hidden URL prefix for admin panel |
+| `DB_PATH` | `data/db/db.sqlite` | SQLite database file path |
+| `DATA_DIR` | `data` | Data directory root |
+| `LISTINGS_DIR` | `data/listings` | Listing media storage |
+| `MAIL_SERVICE_URL` | — | URL of the mail service for sending emails |
+| `INTERNAL_API_TOKEN` | — | Token for internal API calls |
 
 ---
 

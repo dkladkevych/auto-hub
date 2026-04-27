@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"auto-hub/mail/internal/maildir"
@@ -80,9 +81,9 @@ func (s *MailboxService) Create(ctx context.Context, actorID int, localPart, dom
 	}
 
 	if err := maildir.Create(m.MaildirPath); err != nil {
-		// Rollback DB record on filesystem error
-		_ = s.mailboxRepo.Delete(ctx, m.ID)
-		return nil, fmt.Errorf("maildir creation failed: %w", err)
+		// Log but don't fail — Dovecot may manage the maildir itself
+		// or the process may not have filesystem permissions.
+		log.Printf("maildir create warning for %s: %v", m.MaildirPath, err)
 	}
 
 	_ = s.auditRepo.Log(ctx, buildAuditLog(actorID, "mailbox_created", "mailbox", &m.ID, map[string]interface{}{
@@ -149,9 +150,9 @@ func (s *MailboxService) GetWithMembers(ctx context.Context, id int) (*models.Ma
 	return m, members, nil
 }
 
-// Update modifies a mailbox's display name, type and quota.  Personal
-// mailboxes are rejected because they are managed via the user page.
-func (s *MailboxService) Update(ctx context.Context, actorID, mailboxID int, displayName, mailboxType string, quotaMb int) error {
+// Update modifies a mailbox's display name, type, quota and active state.
+// Personal mailboxes are rejected because they are managed via the user page.
+func (s *MailboxService) Update(ctx context.Context, actorID, mailboxID int, displayName, mailboxType string, quotaMb int, isActive bool) error {
 	m, err := s.mailboxRepo.GetByID(ctx, mailboxID)
 	if err != nil {
 		return err
@@ -169,6 +170,7 @@ func (s *MailboxService) Update(ctx context.Context, actorID, mailboxID int, dis
 	m.DisplayName = displayName
 	m.MailboxType = mailboxType
 	m.QuotaMb = quotaMb
+	m.IsActive = isActive
 
 	if err := s.mailboxRepo.Update(ctx, m); err != nil {
 		return err
@@ -178,6 +180,7 @@ func (s *MailboxService) Update(ctx context.Context, actorID, mailboxID int, dis
 		"display_name": displayName,
 		"type":         mailboxType,
 		"quota_mb":     quotaMb,
+		"is_active":    isActive,
 	}))
 
 	return nil
@@ -198,7 +201,7 @@ func (s *MailboxService) Delete(ctx context.Context, actorID, mailboxID int) err
 	}
 
 	if _, err := maildir.SoftDelete(m.MaildirPath); err != nil {
-		return fmt.Errorf("maildir soft-delete failed: %w", err)
+		log.Printf("maildir soft-delete warning for %s: %v", m.MaildirPath, err)
 	}
 
 	_ = s.auditRepo.Log(ctx, buildAuditLog(actorID, "mailbox_deleted", "mailbox", &mailboxID, map[string]interface{}{"email": m.Email}))
@@ -219,10 +222,10 @@ func (s *MailboxService) Reactivate(ctx context.Context, actorID, mailboxID int)
 		return fmt.Errorf("mailbox is already active")
 	}
 
-	// Try to restore Maildir if a deleted copy exists
+	// Try to restore Maildir if a deleted copy exists (best-effort)
 	if deletedPath, err := maildir.FindDeleted(m.MaildirPath); err == nil {
 		if err := maildir.Restore(deletedPath, m.MaildirPath); err != nil {
-			return fmt.Errorf("maildir restore failed: %w", err)
+			log.Printf("maildir restore warning for %s: %v", m.MaildirPath, err)
 		}
 	}
 

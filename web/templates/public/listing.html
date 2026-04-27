@@ -1,66 +1,50 @@
-{% extends "public/base.html" %}
-
-{% block meta_description %}
-{{ car.title }} for ${{ car.price }}. {{ car.description[:120] }}...
-{% endblock %}
-
-{% block og_title %}
-{{ car.title }} — ${{ car.price }} | Auto-Hub
-{% endblock %}
-
-{% block og_description %}
-{{ car.description[:160] }}
-{% endblock %}
-
-{% block og_image %}
-{{ images[0].image_url if images else '/static/preview.jpg' }}
-{% endblock %}
-
-{% block title %}{{ car.title }} — ${{ car.price }} | Auto-Hub{% endblock %}
-
-{% block head %}
-<link rel="canonical" href="{{ request.host_url.rstrip('/') }}/listing/{{ car.id }}">
+{{ define "meta_description" }}{{ .Car.Title }} for ${{ .Car.Price }}. {{ truncate .Car.Description 120 }}...{{ end }}
+{{ define "og_title" }}{{ .Car.Title }} — ${{ .Car.Price }} | Auto-Hub{{ end }}
+{{ define "og_description" }}{{ truncate .Car.Description 160 }}{{ end }}
+{{ define "og_image" }}{{ if .Images }}{{ (index .Images 0).ImageURL }}{{ else }}/static/preview.jpg{{ end }}{{ end }}
+{{ define "title" }}{{ .Car.Title }} — ${{ .Car.Price }} | Auto-Hub{{ end }}
+{{ define "head" }}
+<link rel="canonical" href="{{ .Host }}/listing/{{ .Car.ID }}">
 <script type="application/ld+json">
 {
     "@context": "https://schema.org",
     "@type": "Car",
-    "name": {{ car.title | tojson }},
-    "image": {{ images | map(attribute='image_url') | list | tojson }},
-    "description": {{ car.description | tojson }},
+    "name": {{ toJSON .Car.Title }},
+    "image": {{ toJSON .ImageURLs }},
+    "description": {{ toJSON .Car.Description }},
     "offers": {
         "@type": "Offer",
-        "price": "{{ car.price }}",
+        "price": "{{ .Car.Price }}",
         "priceCurrency": "CAD",
         "availability": "https://schema.org/InStock"
-    }{% if car.mileage_km %},
+    }{{ if .Car.MileageKm }},
     "mileageFromOdometer": {
         "@type": "QuantitativeValue",
-        "value": "{{ car.mileage_km }}",
+        "value": "{{ .Car.MileageKm }}",
         "unitCode": "KMT"
-    }{% endif %}{% if car.year %},
-    "vehicleModelDate": "{{ car.year }}"{% endif %}{% if car.make %},
+    }{{ end }}{{ if .Car.Year }},
+    "vehicleModelDate": "{{ .Car.Year }}"{{ end }}{{ if .Car.Make }},
     "manufacturer": {
         "@type": "Organization",
-        "name": {{ car.make | tojson }}
-    }{% endif %}{% if car.location %},
+        "name": {{ toJSON .Car.Make }}
+    }{{ end }}{{ if .Car.Location }},
     "areaServed": {
         "@type": "Place",
-        "name": {{ car.location | tojson }}
-    }{% endif %}
+        "name": {{ toJSON .Car.Location }}
+    }{{ end }}
 }
 </script>
-{% endblock %}
-
-{% block content %}
+{{ end }}
+{{ define "content" }}
 <div class="listing-layout">
     <section class="viewer-card">
-        <div class="main-image-wrap {% if car.has_media %}is-clickable{% endif %}" {% if car.has_media %}id="mainImageButton"{% endif %}>
-            {% if car.status == "demo" %}<div class="demo-ribbon">Demo</div>{% endif %}
-            {% if images[0].image_url.endswith('.mp4') %}
+        <div class="main-image-wrap {{ if .Car.HasMedia }}is-clickable{{ end }}" {{ if .Car.HasMedia }}id="mainImageButton"{{ end }}>
+            {{ if eq .Car.Status "demo" }}<div class="demo-ribbon">Demo</div>{{ end }}
+            {{ if .FirstIsVideo }}
             <video
                 id="mainViewerImage"
                 class="main-viewer-image"
-                src="{{ images[0].image_url }}"
+                src="{{ .FirstImageURL }}"
                 muted
                 playsinline
                 preload="metadata"
@@ -70,64 +54,64 @@
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
                 </button>
             </div>
-            {% else %}
+            {{ else }}
             <img
                 id="mainViewerImage"
                 class="main-viewer-image"
-                src="{{ images[0].image_url }}"
-                alt="{{ car.title }}"
+                src="{{ .FirstImageURL }}"
+                alt="{{ .Car.Title }}"
             >
-            {% endif %}
+            {{ end }}
         </div>
 
-        {% if car.has_media %}
+        {{ if .Car.HasMedia }}
         <div class="thumb-row">
-            {% for thumb in thumbs %}
+            {{ range $i, $thumb := .Thumbs }}
                 <button
                     type="button"
-                    class="thumb-btn {% if loop.index0 == 0 %}active{% endif %}"
-                    data-index="{{ loop.index0 }}"
+                    class="thumb-btn {{ if eq $i 0 }}active{{ end }}"
+                    data-index="{{ $i }}"
                 >
                     <img
                         class="thumb-img"
-                        src="{{ thumb.image_url }}"
-                        alt="{{ car.title }}"
+                        src="{{ $thumb.ImageURL }}"
+                        alt="{{ $.Car.Title }}"
                         loading="lazy"
                     >
                 </button>
-            {% endfor %}
+            {{ end }}
         </div>
-        {% endif %}
+        {{ end }}
     </section>
 
     <aside class="details-card">
-        {% if car.status == "archived" %}
+        {{ if eq .Car.Status "archived" }}
             <div class="archived-banner">
                 This listing is archived and may no longer be available.
             </div>
-        {% elif car.status == "demo" %}
+        {{ else if eq .Car.Status "demo" }}
             <div class="demo-banner">
                 Demo listing for preview purposes only.
             </div>
-        {% endif %}
+        {{ end }}
         <div class="listing-head-row">
             <div>
-                <h1 class="listing-title">{{ car.title }}</h1>
-                <p class="listing-price">${{ car.price }}</p>
+                <h1 class="listing-title">{{ .Car.Title }}</h1>
+                <p class="listing-price">${{ .Car.Price }}</p>
             </div>
-            <button type="button" class="favorite-btn favorite-btn-large" data-favorite="{{ car.id }}" aria-label="Toggle favorite" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 6.00019C10.2006 3.90317 7.19377 3.2551 4.93923 5.17534C2.68468 7.09558 2.36727 10.3061 4.13778 12.5772C5.60984 14.4654 10.0648 18.4479 11.5249 19.7369C11.6882 19.8811 11.7699 19.9532 11.8652 19.9815C11.9483 20.0062 12.0393 20.0062 12.1225 19.9815C12.2178 19.9532 12.2994 19.8811 12.4628 19.7369C13.9229 18.4479 18.3778 14.4654 19.8499 12.5772C21.6204 10.3061 21.3417 7.07538 19.0484 5.17534C16.7551 3.2753 13.7994 3.90317 12 6.00019Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            <button type="button" class="favorite-btn favorite-btn-large" data-favorite="{{ .Car.ID }}" aria-label="Toggle favorite" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 6.00019C10.2006 3.90317 7.19377 3.2551 4.93923 5.17534C2.68468 7.09558 2.36727 10.3061 4.13778 12.5772C5.60984 14.4654 10.0648 18.4479 11.5249 19.7369C11.6882 19.8811 11.7699 19.9532 11.8652 19.9815C11.9483 20.0062 12.0393 20.0062 12.1225 19.9815C12.2178 19.9532 12.2994 19.8811 12.4628 19.7369C13.9229 18.4479 18.3778 14.4654 19.8499 12.5772C21.6204 10.3061 21.3417 7.07538 19.0484 5.17534C16.7551 3.2753 13.7994 3.90317 12 6.00019Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
         </div>
         <div class="spec-list">
-            {% if car.mileage_km %}<div class="spec-row"><span>Mileage</span><strong>{{ car.mileage_km }} km</strong></div>{% endif %}
-            {% if car.transmission %}<div class="spec-row"><span>Transmission</span><strong>{{ car.transmission }}</strong></div>{% endif %}
-            {% if car.drivetrain %}<div class="spec-row"><span>Drivetrain</span><strong>{{ car.drivetrain }}</strong></div>{% endif %}
-            {% if car.location %}<div class="spec-row"><span>Location</span><strong>{{ car.location }}</strong></div>{% endif %}
-            {% if car.condition %}<div class="spec-row"><span>Condition</span><strong>{{ car.condition }}</strong></div>{% endif %}
+            {{ if .Car.MileageKm }}<div class="spec-row"><span>Mileage</span><strong>{{ .Car.MileageKm }} km</strong></div>{{ end }}
+            {{ if .Car.Transmission }}<div class="spec-row"><span>Transmission</span><strong>{{ .Car.Transmission }}</strong></div>{{ end }}
+            {{ if .Car.Drivetrain }}<div class="spec-row"><span>Drivetrain</span><strong>{{ .Car.Drivetrain }}</strong></div>{{ end }}
+            {{ if .Car.Location }}<div class="spec-row"><span>Location</span><strong>{{ .Car.Location }}</strong></div>{{ end }}
+            {{ if .Car.Condition }}<div class="spec-row"><span>Condition</span><strong>{{ .Car.Condition }}</strong></div>{{ end }}
         </div>
 
         <div class="description-block">
             <h3>Description</h3>
-            <div class="description-content">{{ car.description | markdown | safe }}</div>
+            <div class="description-content">{{ .DescriptionHTML }}</div>
         </div>
 
         <div class="listing-disclaimer">
@@ -136,15 +120,15 @@
                 Always verify all details independently before purchase.
             </p>
         </div>
-        {% if car.source_url %}
-            <a class="source-link" href="{{ car.source_url }}" target="_blank">Open original listing</a>
-        {% endif %}
+        {{ if .Car.SourceURL }}
+            <a class="source-link" href="{{ .Car.SourceURL }}" target="_blank">Open original listing</a>
+        {{ end }}
     </aside>
 </div>
 
-{% if car.has_media %}
+{{ if .Car.HasMedia }}
 <script id="image-data" type="application/json">
-{{ images | map(attribute='image_url') | list | tojson }}
+{{ .ImagesJSON }}
 </script>
 
 <div id="lightbox" class="lightbox">
@@ -152,12 +136,12 @@
     <button class="lightbox-nav lightbox-prev" type="button" id="lightboxPrevBtn">&#10094;</button>
 
     <div class="lightbox-content" id="lightboxContent">
-        <img id="lightbox-image" class="lightbox-image" src="" alt="{{ car.title }}">
+        <img id="lightbox-image" class="lightbox-image" src="" alt="{{ .Car.Title }}">
     </div>
 
     <button class="lightbox-nav lightbox-next" type="button" id="lightboxNextBtn">&#10095;</button>
 </div>
 
-<script src="{{ url_for('static', filename='js/gallery.js') }}"></script>
-{% endif %}
-{% endblock %}
+<script src="/static/js/gallery.js"></script>
+{{ end }}
+{{ end }}

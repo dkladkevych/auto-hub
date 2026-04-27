@@ -101,6 +101,9 @@ func (s *SMTPSender) Send(from, fromName string, to []string, subject, textBody,
 	if err := wc.Close(); err != nil {
 		return fmt.Errorf("smtp close data: %w", err)
 	}
+	if err := client.DataEnd(); err != nil {
+		return fmt.Errorf("smtp data end: %w", err)
+	}
 
 	return client.Quit()
 }
@@ -145,6 +148,13 @@ func (c *smtpClient) Data() (io.WriteCloser, error) {
 		return nil, err
 	}
 	return c.text.DotWriter(), nil
+}
+
+// DataEnd reads the server's response after the DATA body has been sent.
+// A successful DATA transfer is acknowledged with code 250.
+func (c *smtpClient) DataEnd() error {
+	_, _, err := c.text.ReadResponse(250)
+	return err
 }
 
 func (c *smtpClient) Quit() error {

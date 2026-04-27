@@ -1,3 +1,4 @@
+{{ define "admin_listings_table" }}
 <div class="table-wrap">
     <div class="admin-section-head">
         <h3>Listings</h3>
@@ -16,82 +17,82 @@
         </thead>
 
         <tbody>
-            {% for car in listings %}
+            {{ range .Listings }}
             <tr>
                 <td class="col-preview">
-                    <img class="admin-thumb" src="{{ car.preview_image }}" alt="{{ car.title }}">
+                    <img class="admin-thumb" src="{{ .PreviewImage }}" alt="{{ .Title }}">
                 </td>
 
-                <td class="col-title">{{ car.title }}</td>
+                <td class="col-title">{{ .Title }}</td>
 
-                <td class="col-price">${{ car.price }}</td>
+                <td class="col-price">${{ .Price }}</td>
 
-                <td class="col-views">{{ car.view_count }}</td>
+                <td class="col-views">{{ index $.Views .ID }}</td>
 
                 <td class="col-status">
-                    <span class="status-pill {{ car.status }}">{{ car.status }}</span>
+                    <span class="status-pill {{ .Status }}">{{ .Status }}</span>
                 </td>
 
                 <td class="col-action">
                     <div class="action-row">
-                        <a class="table-action-btn table-action-light" href="/listing/{{ car.id }}">View</a>
-                        <a class="table-action-btn table-action-light" href="/{{ ADMIN_PATH }}/edit/{{ car.id }}">Edit</a>
+                        <a class="table-action-btn table-action-light" href="/listing/{{ .ID }}">View</a>
+                        <a class="table-action-btn table-action-light" href="/{{ $.AdminPath }}/edit/{{ .ID }}">Edit</a>
 
-                        {% if car.status == "active" %}
-                        <form method="POST" action="/{{ ADMIN_PATH }}/archive/{{ car.id }}" class="action-form">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {{ if eq .Status "active" }}
+                        <form method="POST" action="/{{ $.AdminPath }}/archive/{{ .ID }}" class="action-form">
+                            <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
                             <button type="submit" class="table-action-btn table-action-main">Archive</button>
                         </form>
-                        {% elif car.status == "archived" %}
-                        <form method="POST" action="/{{ ADMIN_PATH }}/unarchive/{{ car.id }}" class="action-form">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {{ else if eq .Status "archived" }}
+                        <form method="POST" action="/{{ $.AdminPath }}/unarchive/{{ .ID }}" class="action-form">
+                            <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
                             <button type="submit" class="table-action-btn table-action-main">Unarchive</button>
                         </form>
-                        {% elif car.status == "draft" %}
-                        <form method="POST" action="/{{ ADMIN_PATH }}/publish/{{ car.id }}" class="action-form">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {{ else if eq .Status "draft" }}
+                        <form method="POST" action="/{{ $.AdminPath }}/publish/{{ .ID }}" class="action-form">
+                            <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
                             <button type="submit" class="table-action-btn table-action-main">Publish</button>
                         </form>
-                        {% elif car.status == "demo" %}
-                        <form method="POST" action="/{{ ADMIN_PATH }}/publish/{{ car.id }}" class="action-form">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        {{ else if eq .Status "demo" }}
+                        <form method="POST" action="/{{ $.AdminPath }}/publish/{{ .ID }}" class="action-form">
+                            <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
                             <button type="submit" class="table-action-btn table-action-main">Publish</button>
                         </form>
-                        <form method="POST" action="/{{ ADMIN_PATH }}/archive/{{ car.id }}" class="action-form">
+                        <form method="POST" action="/{{ $.AdminPath }}/archive/{{ .ID }}" class="action-form">
                             <button type="submit" class="table-action-btn table-action-main">Archive</button>
                         </form>
-                        {% endif %}
+                        {{ end }}
 
-                        <form method="POST" action="/{{ ADMIN_PATH }}/delete/{{ car.id }}" class="action-form" onsubmit="return confirm('Delete this listing permanently?');">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <form method="POST" action="/{{ $.AdminPath }}/delete/{{ .ID }}" class="action-form" onsubmit="return confirm('Delete this listing permanently?');">
+                            <input type="hidden" name="csrf_token" value="{{ $.CSRFToken }}">
                             <button type="submit" class="table-action-btn table-action-danger">Delete</button>
                         </form>
                     </div>
                 </td>
             </tr>
-            {% endfor %}
+            {{ end }}
         </tbody>
     </table>
 
-    {% if total_pages > 1 %}
+    {{ if gt .TotalPages 1 }}
     <div class="pagination">
-        {% if page > 1 %}
-            <button type="button" class="pagination-nav" data-page="{{ page - 1 }}">Previous</button>
-        {% endif %}
+        {{ if gt .Page 1 }}
+            <button type="button" class="pagination-nav" data-page="{{ sub .Page 1 }}">Previous</button>
+        {{ end }}
 
-        {% for p in range(1, total_pages + 1) %}
-            {% if p == page %}
-                <span class="page-pill active-page">{{ p }}</span>
-            {% else %}
-                <button type="button" class="page-pill pagination-btn" data-page="{{ p }}">{{ p }}</button>
-            {% endif %}
-        {% endfor %}
+        {{ range $p := .PageRange }}
+            {{ if eq $p $.Page }}
+                <span class="page-pill active-page">{{ $p }}</span>
+            {{ else }}
+                <button type="button" class="page-pill pagination-btn" data-page="{{ $p }}">{{ $p }}</button>
+            {{ end }}
+        {{ end }}
 
-        {% if page < total_pages %}
-            <button type="button" class="pagination-nav" data-page="{{ page + 1 }}">Next</button>
-        {% endif %}
+        {{ if lt .Page .TotalPages }}
+            <button type="button" class="pagination-nav" data-page="{{ add .Page 1 }}">Next</button>
+        {{ end }}
     </div>
-    {% endif %}
+    {{ end }}
 </div>
 
 <script>
@@ -103,3 +104,4 @@ document.addEventListener("click", function (e) {
     loadAdminPage(page);
 });
 </script>
+{{ end }}

@@ -1,0 +1,25 @@
+{{ define "title" }}Verify Email | Auto-Hub{{ end }}
+{{ define "content" }}
+<div class="auth-box">
+    <div class="auth-box-inner">
+        <h2>Verify Email</h2>
+
+        {{ if .Error }}
+            <p class="error-text">{{ .Error }}</p>
+        {{ end }}
+
+        <p style="color: var(--muted); margin: 0 0 14px;">Enter the 6-digit code sent to <strong>{{ .Email }}</strong>.</p>
+
+        <form method="POST" class="form-card">
+            <input type="hidden" name="csrf_token" value="{{ .CSRFToken }}">
+            <input type="hidden" name="email" value="{{ .Email }}">
+            <input type="text" name="code" placeholder="123456" maxlength="6" pattern="\d{6}" required>
+            <button type="submit">Verify</button>
+        </form>
+
+        <div class="auth-links">
+            <a href="/register">Back to registration</a>
+        </div>
+    </div>
+</div>
+{{ end }}

@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Auto-Hub{% endblock %}</title>
+    <title>{{ block "title" . }}Auto-Hub{{ end }}</title>
     <link rel="stylesheet" href="/static/css/base.css">
     <link rel="stylesheet" href="/static/css/site.css">
-    <meta name="description" content="{% block meta_description %}Curated car listings. Manual-first. Simple and clean.{% endblock %}">
+    <meta name="description" content="{{ block "meta_description" . }}Curated car listings. Manual-first. Simple and clean.{{ end }}">
     <!-- Open Graph -->
-    <meta property="og:title" content="{% block og_title %}Auto-Hub{% endblock %}">
-    <meta property="og:description" content="{% block og_description %}Curated car listings. Manual-first. Simple and clean.{% endblock %}">
+    <meta property="og:title" content="{{ block "og_title" . }}Auto-Hub{{ end }}">
+    <meta property="og:description" content="{{ block "og_description" . }}Curated car listings. Manual-first. Simple and clean.{{ end }}">
     <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ request.url }}">
-    <meta property="og:image" content="{% block og_image %}/static/images/preview.jpg{% endblock %}">
-    <link rel="icon" href="{{ url_for('static', filename='images/favicon.svg') }}" type="image/svg+xml">
-    <script src="{{ url_for('static', filename='js/theme.js') }}"></script>
-    {% block head %}{% endblock %}
+    <meta property="og:url" content="{{ .RequestURL }}">
+    <meta property="og:image" content="{{ block "og_image" . }}/static/images/preview.jpg{{ end }}">
+    <link rel="icon" href="/static/images/favicon.svg" type="image/svg+xml">
+    <script src="/static/js/theme.js"></script>
+    {{ block "head" . }}{{ end }}
 </head>
 <body>
     <header class="header">
@@ -29,38 +29,36 @@
                     type="text"
                     name="q"
                     placeholder="Search cars..."
-                    value="{{ filters.get('q', '') if filters else '' }}"
+                    value="{{ .Filters.Q }}"
                 >
 
-                {% if filters %}
-                    {% if filters.get('location') %}
-                        <input type="hidden" name="location" value="{{ filters.get('location') }}">
-                    {% endif %}
-                    {% if filters.get('price_min') %}
-                        <input type="hidden" name="price_min" value="{{ filters.get('price_min') }}">
-                    {% endif %}
-                    {% if filters.get('price_max') %}
-                        <input type="hidden" name="price_max" value="{{ filters.get('price_max') }}">
-                    {% endif %}
-                    {% if filters.get('year_min') %}
-                        <input type="hidden" name="year_min" value="{{ filters.get('year_min') }}">
-                    {% endif %}
-                    {% if filters.get('year_max') %}
-                        <input type="hidden" name="year_max" value="{{ filters.get('year_max') }}">
-                    {% endif %}
-                    {% if filters.get('mileage_min') %}
-                        <input type="hidden" name="mileage_min" value="{{ filters.get('mileage_min') }}">
-                    {% endif %}
-                    {% if filters.get('mileage_max') %}
-                        <input type="hidden" name="mileage_max" value="{{ filters.get('mileage_max') }}">
-                    {% endif %}
-                    {% if filters.get('transmission') %}
-                        <input type="hidden" name="transmission" value="{{ filters.get('transmission') }}">
-                    {% endif %}
-                    {% if filters.get('drivetrain') %}
-                        <input type="hidden" name="drivetrain" value="{{ filters.get('drivetrain') }}">
-                    {% endif %}
-                {% endif %}
+                {{ if .Filters.Location }}
+                    <input type="hidden" name="location" value="{{ .Filters.Location }}">
+                {{ end }}
+                {{ if .Filters.PriceMin }}
+                    <input type="hidden" name="price_min" value="{{ .Filters.PriceMin }}">
+                {{ end }}
+                {{ if .Filters.PriceMax }}
+                    <input type="hidden" name="price_max" value="{{ .Filters.PriceMax }}">
+                {{ end }}
+                {{ if .Filters.YearMin }}
+                    <input type="hidden" name="year_min" value="{{ .Filters.YearMin }}">
+                {{ end }}
+                {{ if .Filters.YearMax }}
+                    <input type="hidden" name="year_max" value="{{ .Filters.YearMax }}">
+                {{ end }}
+                {{ if .Filters.MileageMin }}
+                    <input type="hidden" name="mileage_min" value="{{ .Filters.MileageMin }}">
+                {{ end }}
+                {{ if .Filters.MileageMax }}
+                    <input type="hidden" name="mileage_max" value="{{ .Filters.MileageMax }}">
+                {{ end }}
+                {{ if .Filters.Transmission }}
+                    <input type="hidden" name="transmission" value="{{ .Filters.Transmission }}">
+                {{ end }}
+                {{ if .Filters.Drivetrain }}
+                    <input type="hidden" name="drivetrain" value="{{ .Filters.Drivetrain }}">
+                {{ end }}
 
                 <button type="submit" class="nav-search-btn">Search</button>
                 <button type="button" class="filter-toggle-btn" onclick="toggleAdvancedFilters()" aria-label="Open filters">
@@ -71,6 +69,16 @@
             </form>
 
             <div class="header-actions">
+                {{ if .CurrentUser }}
+                    <a class="header-auth-link" href="/profile">Profile</a>
+                    <form method="POST" action="/logout" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="{{ .CSRFToken }}">
+                        <button type="submit" class="header-auth-link" style="background:transparent;cursor:pointer;">Log Out</button>
+                    </form>
+                {{ else }}
+                    <a class="header-auth-link" href="/login">Log In</a>
+                    <a class="header-auth-link" href="/register">Register</a>
+                {{ end }}
                 <a id="savedLink" class="header-saved-link" href="/saved">
                     <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:18px;height:18px;"><path d="M12 6.00019C10.2006 3.90317 7.19377 3.2551 4.93923 5.17534C2.68468 7.09558 2.36727 10.3061 4.13778 12.5772C5.60984 14.4654 10.0648 18.4479 11.5249 19.7369C11.6882 19.8811 11.7699 19.9532 11.8652 19.9815C11.9483 20.0062 12.0393 20.0062 12.1225 19.9815C12.2178 19.9532 12.2994 19.8811 12.4628 19.7369C13.9229 18.4479 18.3778 14.4654 19.8499 12.5772C21.6204 10.3061 21.3417 7.07538 19.0484 5.17534C16.7551 3.2753 13.7994 3.90317 12 6.00019Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
                     <span id="savedCount">0</span>
@@ -85,38 +93,38 @@
 
     <form method="GET" action="/" class="search-panel container" id="advancedFilters">
         <div class="filter-grid">
-            <input type="text" name="location" placeholder="Location" value="{{ filters.get('location', '') if filters else '' }}" style="grid-column: 1 / -1;">
+            <input type="text" name="location" placeholder="Location" value="{{ .Filters.Location }}" style="grid-column: 1 / -1;">
 
-            <input type="number" name="price_min" placeholder="Price from" value="{{ filters.get('price_min', '') if filters else '' }}">
-            <input type="number" name="price_max" placeholder="Price to" value="{{ filters.get('price_max', '') if filters else '' }}">
+            <input type="number" name="price_min" placeholder="Price from" value="{{ .Filters.PriceMin }}">
+            <input type="number" name="price_max" placeholder="Price to" value="{{ .Filters.PriceMax }}">
 
-            <input type="number" name="year_min" placeholder="Year from" value="{{ filters.get('year_min', '') if filters else '' }}">
-            <input type="number" name="year_max" placeholder="Year to" value="{{ filters.get('year_max', '') if filters else '' }}">
+            <input type="number" name="year_min" placeholder="Year from" value="{{ .Filters.YearMin }}">
+            <input type="number" name="year_max" placeholder="Year to" value="{{ .Filters.YearMax }}">
 
-            <input type="number" name="mileage_min" placeholder="Mileage from" value="{{ filters.get('mileage_min', '') if filters else '' }}">
-            <input type="number" name="mileage_max" placeholder="Mileage to" value="{{ filters.get('mileage_max', '') if filters else '' }}">
+            <input type="number" name="mileage_min" placeholder="Mileage from" value="{{ .Filters.MileageMin }}">
+            <input type="number" name="mileage_max" placeholder="Mileage to" value="{{ .Filters.MileageMax }}">
 
             <select name="transmission">
                 <option value="">Transmission</option>
-                <option value="Automatic" {% if filters and filters.get('transmission') == 'Automatic' %}selected{% endif %}>Automatic</option>
-                <option value="Manual" {% if filters and filters.get('transmission') == 'Manual' %}selected{% endif %}>Manual</option>
-                <option value="CVT" {% if filters and filters.get('transmission') == 'CVT' %}selected{% endif %}>CVT</option>
-                <option value="Unknown" {% if filters and filters.get('transmission') == 'Unknown' %}selected{% endif %}>Unknown</option>
+                <option value="Automatic" {{ if eq .Filters.Transmission "Automatic" }}selected{{ end }}>Automatic</option>
+                <option value="Manual" {{ if eq .Filters.Transmission "Manual" }}selected{{ end }}>Manual</option>
+                <option value="CVT" {{ if eq .Filters.Transmission "CVT" }}selected{{ end }}>CVT</option>
+                <option value="Unknown" {{ if eq .Filters.Transmission "Unknown" }}selected{{ end }}>Unknown</option>
             </select>
 
             <select name="drivetrain">
                 <option value="">Drivetrain</option>
-                <option value="FWD" {% if filters and filters.get('drivetrain') == 'FWD' %}selected{% endif %}>FWD</option>
-                <option value="RWD" {% if filters and filters.get('drivetrain') == 'RWD' %}selected{% endif %}>RWD</option>
-                <option value="AWD" {% if filters and filters.get('drivetrain') == 'AWD' %}selected{% endif %}>AWD</option>
-                <option value="4WD" {% if filters and filters.get('drivetrain') == '4WD' %}selected{% endif %}>4WD</option>
-                <option value="Unknown" {% if filters and filters.get('drivetrain') == 'Unknown' %}selected{% endif %}>Unknown</option>
+                <option value="FWD" {{ if eq .Filters.Drivetrain "FWD" }}selected{{ end }}>FWD</option>
+                <option value="RWD" {{ if eq .Filters.Drivetrain "RWD" }}selected{{ end }}>RWD</option>
+                <option value="AWD" {{ if eq .Filters.Drivetrain "AWD" }}selected{{ end }}>AWD</option>
+                <option value="4WD" {{ if eq .Filters.Drivetrain "4WD" }}selected{{ end }}>4WD</option>
+                <option value="Unknown" {{ if eq .Filters.Drivetrain "Unknown" }}selected{{ end }}>Unknown</option>
             </select>
         </div>
 
-        {% if filters and filters.get('q') %}
-            <input type="hidden" name="q" value="{{ filters.get('q') }}">
-        {% endif %}
+        {{ if .Filters.Q }}
+            <input type="hidden" name="q" value="{{ .Filters.Q }}">
+        {{ end }}
 
         <div class="filter-actions">
             <button type="submit" class="primary-btn">Apply filters</button>
@@ -125,7 +133,7 @@
     </form>
 
     <main class="container">
-        {% block content %}{% endblock %}
+        {{ template "content" . }}
     </main>
 
     <footer class="site-footer">
@@ -156,7 +164,7 @@
         </div>
     </footer>
 
-    <script src="{{ url_for('static', filename='js/filters.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/favorites.js') }}"></script>
+    <script src="/static/js/filters.js"></script>
+    <script src="/static/js/favorites.js"></script>
 </body>
 </html>

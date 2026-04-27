@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-        <loc>{{ host }}/</loc>
+        <loc>{{ .Host }}/</loc>
         <changefreq>daily</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
-        <loc>{{ host }}/terms</loc>
+        <loc>{{ .Host }}/terms</loc>
         <changefreq>monthly</changefreq>
         <priority>0.3</priority>
     </url>
     <url>
-        <loc>{{ host }}/privacy</loc>
+        <loc>{{ .Host }}/privacy</loc>
         <changefreq>monthly</changefreq>
         <priority>0.3</priority>
     </url>
-    {% for car in listings %}
+    {{ range .Listings }}
     <url>
-        <loc>{{ host }}/listing/{{ car.id }}</loc>
-        <lastmod>{{ car.published_at[:10] }}</lastmod>
+        <loc>{{ $.Host }}/listing/{{ .ID }}</loc>
+        {{ if .PublishedAt }}<lastmod>{{ formatDate .PublishedAt "2006-01-02" }}</lastmod>{{ end }}
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
-    {% endfor %}
+    {{ end }}
 </urlset>
